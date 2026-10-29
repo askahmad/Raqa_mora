@@ -333,7 +333,7 @@ function AccountSelect({
   invalid?: boolean;
 }) {
   return (
-    <Select value={value || undefined} onValueChange={onChange}>
+    <Select value={value ?? ""} onValueChange={onChange}>
       <SelectTrigger id={id} aria-invalid={invalid || undefined} className={cn("w-full", invalid && "border-danger-brand")}>
         <SelectValue placeholder={accounts === null ? "Loading accounts…" : "Choose an account"} />
       </SelectTrigger>
@@ -799,7 +799,7 @@ export function DebtDialog({
                   <Plus className="size-3" aria-hidden /> New person
                 </button>
               </div>
-              <Select value={personId || undefined} onValueChange={setPersonId}>
+              <Select value={personId ?? ""} onValueChange={setPersonId}>
                 <SelectTrigger id="debt-person" aria-invalid={Boolean(fieldErrors.person) || undefined} className={cn("w-full", fieldErrors.person && "border-danger-brand")}>
                   <SelectValue placeholder="Who is this entry for?" />
                 </SelectTrigger>
