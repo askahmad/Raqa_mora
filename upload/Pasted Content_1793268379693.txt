@@ -1,0 +1,867 @@
+# MASTER BUILD PROMPT — RAQAMORA
+## Premium Personal Finance Command Center | Pakistan-First FinTech SaaS
+
+You are a senior product strategist, fintech software architect, senior full-stack engineer, database designer, financial calculation specialist, and premium UI/UX designer with 15+ years of experience building reliable financial products.
+
+Your task is to design and implement **RAQAMORA**, a polished, functional, production-oriented personal finance management web application focused initially on users in Pakistan.
+
+Do not build an ordinary expense tracker, a generic admin dashboard, or a static Figma-style mockup. Build a coherent financial product that helps people understand where their money goes, what they own, what they owe, who owes them, and how their financial position changes over time.
+
+**Brand name:** RAQAMORA  
+**Tagline:** Your Money. One Clear Picture.  
+**Product category:** Personal Finance & Money Management  
+**Primary market:** Pakistan  
+**Default currency:** PKR  
+**Timezone:** Asia/Karachi  
+**Primary experience:** Responsive web application, designed for desktop and mobile, with installable PWA capability planned for a later phase.
+
+---
+
+# 1. HOW YOU MUST APPROACH THIS PROJECT
+
+If you have access to the project filesystem and terminal, first inspect the existing repository, then implement the application directly in it. Preserve useful existing work instead of blindly replacing files.
+
+If this is a new project, establish the project structure and implement it.
+
+If you are operating only in a chat environment without filesystem access, provide the implementation in manageable, logically ordered file batches and clearly distinguish completed code from anything that still needs to be run or configured.
+
+Follow this workflow:
+
+1. Inspect the environment and existing code.
+2. Define a concise implementation plan and data model.
+3. Establish the complete visual design system.
+4. Implement authentication, database schema, and financial calculation utilities.
+5. Build transactions, accounts, and the person-wise ledger.
+6. Build the dashboard, reports, budgets, and other required screens.
+7. Add validation, error handling, security controls, and tests.
+8. Run available lint, type-check, test, and production-build commands.
+9. Fix issues found during verification.
+10. Deliver setup instructions, environment configuration, database migrations, and an honest implementation report.
+
+**Do not stop after creating a plan or a homepage.** Continue through the functional core and all required MVP screens. If a real external credential, service account, or human action is required, implement the integration boundary and document that specific blocker.
+
+Do not claim that something works unless you have verified it. Never fabricate test results, API connections, bank integrations, or completed features.
+
+# 2. PRODUCT VISION
+
+RAQAMORA should answer these questions clearly:
+
+- How much money do I currently have available?
+- How much have I earned and spent today?
+- What are my total expenses this month and this year?
+- Which categories consume most of my money?
+- How much money have I lent to other people?
+- How much money have I borrowed?
+- How much money has been returned or repaid?
+- Who still owes me money, and how much?
+- Whom do I still need to pay, and how much?
+- What bills and repayments are due soon?
+- How much am I saving?
+- What is my actual net financial position?
+
+The product's core differentiator is **financial clarity and trustworthy calculations**, not merely attractive graphs.
+
+Never confuse cash movement, income, expenses, debt, repayment, or internal transfers.
+
+# 3. REQUIRED TECHNOLOGY STACK
+
+Use stable, mutually compatible versions of:
+
+- Next.js with App Router
+- React and TypeScript with strict type checking
+- Tailwind CSS
+- shadcn/ui for accessible UI foundations
+- Lucide icons
+- Recharts for charts
+- Supabase PostgreSQL for persistent data
+- Supabase Auth for authentication
+- Supabase Storage for private receipt attachments
+- React Hook Form and Zod for form handling and validation
+- TanStack Table for complex transaction tables where useful
+- date-fns or an equivalent reliable date utility
+- Vitest for unit tests and Playwright for critical end-to-end flows when practical
+
+Use Server Components by default where suitable. Use Client Components only when interaction is needed.
+
+Use server-side authorization for protected operations. Never expose a Supabase service-role key or other secret to the browser.
+
+Provide:
+
+- `.env.example`
+- SQL migrations
+- database types
+- a README
+- appropriate seed/demo data
+- clear local development instructions
+- an understandable folder structure
+
+Do not introduce unnecessary libraries merely to make the stack look sophisticated.
+
+# 4. PREMIUM BRAND AND UI/UX DIRECTION
+
+The design must look like a considered, premium fintech product created by an experienced product-design team. Avoid generic dashboard templates.
+
+## Visual identity
+
+Use the following starting palette:
+
+- Midnight navy: `#101C2C`
+- Warm ivory: `#F7F5EF`
+- Emerald accent: `#16836F`
+- Champagne gold: `#C5A46D`
+- Primary text: `#202A36`
+- Secondary text: `#747E8B`
+- Borders: subtle warm or cool neutral shades
+- Success, warning, and error states: accessible, semantically consistent colours
+
+Use emerald for meaningful positive financial states, restrained red for negative or overdue states, and gold only as a subtle brand accent.
+
+Do not fill every card with a different colour.
+
+## Layout
+
+Create a compact, professional application shell with:
+
+- Collapsible desktop sidebar
+- Mobile navigation or a well-designed mobile menu
+- Top navigation bar
+- Page title and context
+- Global date-range filtering where appropriate
+- Quick-add transaction action
+- Search and notifications
+- User profile and settings
+- Useful breadcrumbs on deeper pages
+
+Use a consistent spacing system, clear typography, fine borders, understated shadows, balanced whitespace, and compact data presentation.
+
+Avoid oversized metric cards, excessive empty space, decorative gradients everywhere, excessive rounded corners, unnecessary glassmorphism, and oversized headings.
+
+The design must look excellent at 1440px, 1024px, 768px, and small mobile widths. On mobile, tables should transform into usable transaction rows or controlled horizontal layouts rather than breaking.
+
+## Motion and interactions
+
+Use Framer Motion only where it provides real value and is compatible with the stack.
+
+Include restrained page transitions, dropdown animations, chart entrance effects, loading skeletons, hover feedback, modal transitions, and subtle confirmation feedback.
+
+Respect `prefers-reduced-motion`.
+
+Every interactive control must have a meaningful action. No decorative buttons that do nothing.
+
+## Branding
+
+Create a small geometric RAQAMORA wordmark and a simple original monogram suitable for a favicon. Use typography and layout to establish identity rather than relying on a stock logo.
+
+Use the tagline “Your Money. One Clear Picture.” where appropriate.
+
+# 5. APPLICATION INFORMATION ARCHITECTURE
+
+Build the following routes or equivalent logical screens:
+
+1. `/` — marketing/landing page
+2. `/login` — sign-in
+3. `/signup` — account creation
+4. `/dashboard` — financial overview
+5. `/transactions` — complete transaction history
+6. `/transactions/new` — transaction creation
+7. `/accounts` — cash, bank, and wallet accounts
+8. `/people` — people and counterparties
+9. `/people/[id]` — person-wise ledger and balance
+10. `/debts` — money lent and money borrowed
+11. `/budgets` — monthly and category budgets
+12. `/savings-goals` — savings targets
+13. `/recurring` — recurring transactions
+14. `/reports` — analytics and date-based reports
+15. `/notifications` — reminders and alerts
+16. `/settings` — profile, preferences, security, and data management
+
+If you choose a different route structure, preserve the complete functionality and clear navigation.
+
+# 6. AUTHENTICATION, ONBOARDING, AND FIRST-RUN EXPERIENCE
+
+Implement:
+
+- Sign-up
+- Sign-in
+- Sign-out
+- Password-reset flow
+- Protected application routes
+- Server-side session handling
+- Clear loading and authentication-error states
+
+After registration, guide the user through a short onboarding flow:
+
+1. Enter their name and preferred display settings.
+2. Select the default currency, initially PKR.
+3. Create an initial cash or bank account.
+4. Optionally add an opening balance.
+5. Select starter categories or use sensible defaults.
+6. Land on the dashboard with a useful explanation of how to get started.
+
+Do not classify an opening balance as income.
+
+Provide an explicitly labelled demo mode with sample data for evaluation. Demo data must never mix with real financial records, and the app must not silently fall back to pretending that fake data is persistent real-user data.
+
+# 7. DASHBOARD — THE CORE EXPERIENCE
+
+Create a useful financial command center, not a screen filled with oversized cards.
+
+## Primary metrics
+
+Display:
+
+- Available account balance
+- Total income for the selected period
+- Total expenses for the selected period
+- Money to receive
+- Money to pay
+- Net financial position
+- Budget usage
+- Upcoming bills and repayments
+
+Show a clear date selector:
+
+- Today
+- This week
+- This month
+- This year
+- Custom range
+
+Allow the user to compare periods where appropriate.
+
+## Charts
+
+Include meaningful, interactive charts:
+
+1. Income versus expenses over time
+2. Daily or monthly expense trend
+3. Expense breakdown by category
+4. Money-in and money-out cash-flow chart
+5. Monthly budget progress
+6. Outstanding receivables versus payables
+
+Chart data must come from actual database records or clearly identified demo records. Changing filters must update the appropriate totals and charts.
+
+Add useful tooltips, legends, loading states, empty states, and accessible chart descriptions.
+
+## Additional dashboard sections
+
+- Recent transactions
+- Largest expenses
+- Frequently used categories
+- Upcoming due dates
+- People with outstanding balances
+- Budget warnings
+- A concise financial summary
+
+Use a clear hierarchy. The most important information must be visible without unnecessary scrolling.
+
+# 8. TRANSACTIONS — COMPLETE MONEY MOVEMENT HISTORY
+
+Support these transaction types:
+
+- Income
+- Expense
+- Transfer between own accounts
+- Money lent to another person
+- Money borrowed from another person
+- Repayment received for money previously lent
+- Repayment made for money previously borrowed
+- Refund
+- Carefully controlled balance adjustment
+
+Each transaction should support the relevant fields:
+
+- Amount
+- Type
+- Date and time
+- Category
+- Source or destination account
+- Counterparty/person, where applicable
+- Description or note
+- Optional due date
+- Optional attachment
+- Related debt/loan record, where appropriate
+- Creation and update timestamps
+
+Build a fast transaction form. Show and hide fields dynamically depending on the selected transaction type.
+
+## Transaction list
+
+Support:
+
+- Search by note, name, or reference
+- Filter by date range
+- Filter by type
+- Filter by category
+- Filter by account
+- Filter by person
+- Sort by date and amount
+- Pagination or a suitable scalable loading strategy
+- View transaction details
+- Edit permitted transactions
+- Delete with confirmation
+- Export filtered records
+- Clear empty states when no records match
+
+After any successful create, edit, delete, refund, repayment, or transfer operation, every affected balance and report must update correctly.
+
+Use an audit trail for important changes. Never silently alter the history of an already-linked debt repayment.
+
+# 9. CRITICAL FINANCIAL CALCULATION RULES
+
+Treat these rules as business invariants and write unit tests for them.
+
+## Income
+
+Income increases the selected account balance and increases income totals.
+
+## Expense
+
+An expense decreases the selected account balance and increases expense totals.
+
+## Internal transfer
+
+A transfer decreases the source account and increases the destination account by the same amount.
+
+It is neither income nor expense. Never count an internal transfer twice in cash-flow reports.
+
+## Money lent
+
+When the user lends Rs. 10,000:
+
+- The selected cash/account balance decreases by Rs. 10,000.
+- The user's receivable increases by Rs. 10,000.
+- The amount is not recorded as an expense.
+- A corresponding person-wise obligation is created.
+
+## Partial repayment received
+
+If the borrower returns Rs. 4,000:
+
+- The selected account balance increases by Rs. 4,000.
+- The receivable decreases by Rs. 4,000.
+- The outstanding amount becomes Rs. 6,000.
+- The repayment is not recorded as new income.
+
+## Money borrowed
+
+When the user borrows Rs. 10,000:
+
+- The selected account balance increases by Rs. 10,000.
+- The user's payable liability increases by Rs. 10,000.
+- The amount is not recorded as income.
+
+## Repayment of borrowed money
+
+If the user repays Rs. 4,000:
+
+- The selected account balance decreases by Rs. 4,000.
+- The corresponding payable liability decreases by Rs. 4,000.
+- The principal repayment is not an expense.
+- Any interest or fee must be recorded separately as an expense.
+
+## Refunds and adjustments
+
+Refunds must correctly reverse or offset the original expense where appropriate.
+
+Balance adjustments require a reason, confirmation, and an auditable record.
+
+## Amount validation
+
+- Amounts must be positive and valid.
+- Repayments must not exceed the outstanding amount.
+- Transfers cannot have the same source and destination account.
+- A transaction must reference an account belonging to the authenticated user's financial space.
+- Concurrent repayment submissions must not create overpayments.
+- Duplicate submissions must be prevented where practical.
+
+## Financial precision
+
+Store monetary values in an integer-based smallest currency unit or another carefully chosen exact-decimal representation. For PKR, avoid binary floating-point arithmetic for authoritative financial totals.
+
+Build reusable utilities for:
+
+- Parsing user-entered amounts
+- Validating amounts
+- Formatting PKR
+- Adding and subtracting money
+- Computing account balances
+- Computing outstanding obligations
+- Computing period-based totals
+
+Never use formatted display strings as underlying monetary values.
+
+## Net financial position
+
+Use a clearly documented formula. At minimum:
+
+Net financial position = account balances + receivables − payables.
+
+Explain what is included or excluded. Do not describe an accounting estimate as the same thing as available cash.
+
+## Database integrity
+
+Use database transactions for financial operations that must succeed together. For example, creating a loan, creating its first money movement, and updating related records must not leave partially committed financial state.
+
+Enforce ownership and valid relationships in the database wherever practical. Do not rely exclusively on client-side checks.
+
+# 10. ACCOUNTS AND WALLETS
+
+Users can create and manage accounts such as:
+
+- Cash in hand
+- Bank account
+- Easypaisa
+- JazzCash
+- Savings account
+- Custom account
+
+Each account needs:
+
+- Name
+- Type
+- Opening balance
+- Current calculated balance
+- Optional colour or icon
+- Created date
+- Active or archived status
+
+Requirements:
+
+- Show each account's transaction history.
+- Support account-to-account transfers.
+- Support opening-balance corrections through a controlled adjustment.
+- Prevent users from accidentally using archived accounts for new transactions.
+- Provide a reconciliation workflow to compare the recorded balance with the actual balance.
+- Do not assume that connecting a wallet name automatically connects to its real financial account.
+
+Actual bank and wallet integrations are not part of the basic MVP unless a legitimate, documented API is configured.
+
+# 11. PEOPLE, DEBTS, AND REPAYMENTS
+
+Create an individual ledger for each person or counterparty.
+
+Support:
+
+- Person name
+- Optional phone number
+- Optional notes
+- Money lent
+- Money borrowed
+- Partial repayments
+- Outstanding balance
+- Due date
+- Payment proof
+- Full activity history
+- Search and sorting
+- Printable or exportable statement
+
+Separate receivables from payables. A person may have different transactions in both directions, so do not assume that all transactions associated with one person represent a single type of debt.
+
+Use a well-defined ledger model:
+
+- Every loan or borrowing record has an original principal.
+- Every repayment links to the correct obligation.
+- Outstanding balances derive from the original principal and valid repayments.
+- Completed obligations are marked settled.
+- Overdue obligations are identified by due date and remaining balance.
+- Edits and deletions must preserve historical integrity.
+
+Never imply that recording an amount means an actual bank transfer occurred.
+
+Add optional reminder dates. Do not send SMS or WhatsApp messages unless the relevant provider, permissions, and configuration actually exist.
+
+# 12. CATEGORIES, BUDGETS, AND SAVINGS GOALS
+
+## Categories
+
+Provide editable income and expense categories with sensible defaults.
+
+Examples:
+
+- Food and groceries
+- Transport
+- Bills and utilities
+- Rent
+- Shopping
+- Education
+- Health
+- Travel
+- Subscriptions
+- Salary
+- Freelancing
+- Business income
+- Other
+
+Allow custom categories, category icons, and suitable reporting filters.
+
+Deleting a category must not destroy historical transactions. Provide a safe archive or reassignment process.
+
+## Budgets
+
+Support monthly budgets and category-based limits.
+
+Show:
+
+- Budget amount
+- Amount used
+- Amount remaining
+- Percentage used
+- Progress bar
+- Warning when a configurable threshold is reached
+- Overspending state
+- Comparison with the previous period
+
+A budget warning must not be confused with an actual expense or debt.
+
+## Savings goals
+
+Support multiple savings goals with:
+
+- Goal name
+- Target amount
+- Optional target date
+- Current saved amount
+- Progress
+- Contribution history
+
+Do not create real-money transfers automatically unless the user has explicitly recorded or authorized them.
+
+# 13. RECURRING TRANSACTIONS AND REMINDERS
+
+Allow users to define recurring income and expenses, including:
+
+- Daily
+- Weekly
+- Monthly
+- Yearly
+- Custom supported schedules
+
+Examples include rent, subscriptions, salary, fees, and recurring bills.
+
+Provide:
+
+- Next scheduled date
+- Active/paused status
+- Reminder preferences
+- Clear distinction between scheduled and completed transactions
+- Idempotent processing so a schedule cannot create the same transaction repeatedly
+- Ability to skip or modify an upcoming occurrence
+
+A reminder must not be treated as proof that a payment was made. A recurring expense should not automatically become a completed payment without the designed confirmation or execution workflow.
+
+Use timezone-aware scheduling, especially Asia/Karachi. If a scheduled background job is needed, document and configure the appropriate job mechanism instead of pretending an ordinary page load guarantees scheduling.
+
+# 14. ANALYTICS AND REPORTING
+
+Build a dedicated Reports page supporting custom date ranges and period comparisons.
+
+Include:
+
+- Daily spending
+- Weekly spending
+- Monthly income and expenses
+- Annual summaries
+- Category comparison
+- Account-wise cash movement
+- Income versus expense
+- Savings trend
+- Receivables and payables
+- Repayment history
+- Largest transactions
+- Budget performance
+- Net financial position trend
+
+Allow export to CSV and a properly formatted PDF report.
+
+Exports must respect the active filters and authenticated user's permissions. Dates, amounts, currency labels, and transaction types must remain unambiguous.
+
+Do not include unrelated people's records or hidden internal fields in exported files.
+
+# 15. RECEIPTS, ATTACHMENTS, AND DATA EXPORT
+
+Allow optional attachments for receipts, invoices, screenshots, or payment evidence.
+
+Requirements:
+
+- Upload validation
+- File-type and size limits
+- Private storage
+- Authenticated access checks
+- Safe file names
+- Secure signed URLs or equivalent protected access
+- Clear upload failure states
+- Attachment removal with confirmation
+
+Provide a reliable way for users to export their own financial records and to back up and restore data.
+
+Do not expose publicly accessible receipt URLs or leak personal financial data in logs.
+
+# 16. SMART FEATURES — BUILD ONLY WHEN REAL
+
+After the core app is correct, add smart entry conveniences where feasible.
+
+Potential features:
+
+- Quick entry such as “Ali ko 5000 diye.”
+- Roman Urdu transaction entry
+- Voice-to-text input where supported
+- Suggested categories
+- Duplicate transaction warnings
+- Unusual spending alerts
+- Recurring transaction suggestions
+
+Any natural-language parser must ask for clarification when a statement could mean multiple things. Never create a financial transaction from an ambiguous voice or text instruction without the user's review and confirmation.
+
+If an AI service is used, make it optional and server-side. Document its required environment variables, provider costs, and privacy implications. Do not commit API keys.
+
+Do not claim that a feature is AI-powered if it is only a basic rule-based parser.
+
+# 17. PAKISTAN-SPECIFIC EXPERIENCE
+
+Build for Pakistan from the start.
+
+- PKR as the default currency
+- Asia/Karachi timezone
+- PKR formatting with a consistent `Rs.` or `PKR` convention
+- Easy addition of Easypaisa and JazzCash accounts as manually tracked accounts
+- Categories and example data relevant to Pakistani personal finances
+- Roman Urdu-friendly transaction notes
+- Optional Urdu labels with correct RTL layout
+- Localized dates and usable number formatting
+- Support for manual recording of bank and wallet transactions
+
+Build a language preference system so English can be the initial interface while Roman Urdu or Urdu support can be expanded without restructuring every screen.
+
+Do not falsely claim live access to banks, Easypaisa, JazzCash, or SMS messages without a genuine integration and user authorization.
+
+# 18. DATABASE DESIGN AND DATA SECURITY
+
+Design a normalized PostgreSQL schema with appropriate foreign keys, constraints, and indexes.
+
+At minimum, consider these entities:
+
+- User profiles
+- Financial spaces/workspaces
+- Space membership or ownership
+- Accounts
+- Categories
+- People/counterparties
+- Transactions
+- Loan/borrowing obligations
+- Repayment records or linked repayment transactions
+- Budgets
+- Savings goals and contributions
+- Recurring transaction schedules
+- Notifications
+- Attachments
+- Audit events
+
+Use a coherent model, not disconnected tables added without purpose.
+
+Every financial record must belong to an authorized user or financial space. Enforce Supabase Row Level Security policies on all relevant tables.
+
+Test unauthorized cross-user reads and writes. Do not rely on a hidden frontend route to protect records.
+
+Use Zod for input validation on the server and client where appropriate. Validate all sensitive mutations server-side.
+
+Add indexes for the main query patterns: user/space, transaction date, account, category, person, type, and linked obligations.
+
+Use reversible or well-documented migrations. Never store secrets in Git. Document environment-variable setup and safe handling of development credentials.
+
+Provide a clear data retention and deletion strategy.
+
+# 19. EMPTY, LOADING, ERROR, AND SUCCESS STATES
+
+Every core screen must have deliberate states for:
+
+- First-time users with no transactions
+- No matching search results
+- Loading data
+- Invalid form entries
+- Failed network or database requests
+- Permission errors
+- Failed file uploads
+- Successful saves
+- Missing configuration
+- Expired sessions
+
+Empty states should explain the next useful action. Use skeletons where appropriate, but avoid showing fake statistics as live account data.
+
+Destructive actions must use confirmation dialogs. Saving should provide clear success or failure feedback.
+
+Do not silently suppress financial-operation errors.
+
+# 20. PERFORMANCE, RESPONSIVENESS, AND ACCESSIBILITY
+
+- Keep TypeScript strict.
+- Avoid unnecessary client-side rendering.
+- Use server-side pagination for large transaction histories where appropriate.
+- Avoid fetching an entire transaction history just to calculate a small summary.
+- Prefer efficient database aggregation or tested calculation utilities.
+- Do not make the first dashboard render depend on multiple unnecessary requests.
+- Optimize images and load them appropriately.
+- Provide useful metadata and app icons.
+- Ensure keyboard navigation and accessible form labels.
+- Maintain sufficient colour contrast.
+- Add visible focus states.
+- Support reduced motion.
+- Avoid layouts that break on narrow screens.
+- Avoid large re-rendering costs for charts and transaction lists.
+
+A polished UI is not a substitute for performance or correctness.
+
+# 21. TESTING REQUIREMENTS
+
+Create unit tests for at least:
+
+- PKR amount parsing and formatting
+- Income calculations
+- Expense calculations
+- Internal transfers
+- Opening balances
+- Lending
+- Borrowing
+- Partial repayments
+- Completed and overdue obligations
+- Repayment amount validation
+- Refunds
+- Monthly and yearly summaries
+- Net financial position
+- Budget progress
+- Timezone-aware date filtering
+
+Create end-to-end tests for the most important user workflows where the available environment supports them.
+
+At minimum, verify these scenarios:
+
+**Scenario A:** User creates a cash account with an opening balance of Rs. 20,000, records an expense of Rs. 2,000, and sees Rs. 18,000.
+
+**Scenario B:** User lends Rs. 10,000 to Ali. Available balance decreases by Rs. 10,000, and the receivable increases by Rs. 10,000 without increasing expenses.
+
+**Scenario C:** Ali returns Rs. 4,000. The account balance increases by Rs. 4,000, Ali's outstanding balance becomes Rs. 6,000, and income does not increase.
+
+**Scenario D:** User transfers Rs. 3,000 from Cash to Easypaisa. Cash decreases and Easypaisa increases by the same amount. Total income and expenses do not change.
+
+**Scenario E:** User borrows Rs. 8,000 and later repays Rs. 3,000. The outstanding payable is correctly calculated as Rs. 5,000, excluding any separately recorded interest or charges.
+
+**Scenario F:** User tries to repay more than an outstanding loan. The operation is rejected safely and no balance is changed.
+
+**Scenario G:** A second user attempts to read or modify the first user's financial records. The database must reject unauthorized access.
+
+**Scenario H:** User filters transactions to a date range and exports the filtered records. Exported results must match the filter.
+
+Run linting, type checks, unit tests, and a production build. Resolve the failures that can be fixed in the current environment. Explicitly report tests that could not be executed and why.
+
+# 22. DELIVERY PHASES
+
+Implement in this order without sacrificing the integrity of the underlying architecture.
+
+## Phase 1 — Foundation
+
+- Project setup
+- Design system
+- Authentication
+- Database migrations
+- RLS policies
+- Account creation
+- Categories
+- Amount utilities
+- Transaction model
+- Core financial calculation tests
+
+## Phase 2 — Financial core
+
+- Income and expense creation
+- Internal transfers
+- People and individual ledgers
+- Lending and borrowing
+- Partial repayments
+- Correct account balances
+- Outstanding receivables and payables
+- Transaction history, edits, and safe deletion
+
+## Phase 3 — Dashboard and reports
+
+- Compact metric cards
+- Income-versus-expense chart
+- Expense category chart
+- Cash-flow trend
+- Period filters
+- Recent transactions
+- Account and debt summaries
+- CSV export and PDF reports
+
+## Phase 4 — Personal finance tools
+
+- Budgets
+- Savings goals
+- Recurring schedules
+- Upcoming due dates
+- Notifications and reminders
+- Receipt attachments
+- Backup and restore
+
+## Phase 5 — Premium finishing
+
+- Responsive refinements
+- Loading and empty states
+- Motion polish
+- Accessibility
+- Urdu/RTL foundations
+- Demo experience
+- Performance checks
+- End-to-end testing
+- Production build verification
+- Documentation
+
+Do not create separate implementations of the same financial calculation in different screens. Reuse the same tested domain logic.
+
+# 23. ACCEPTANCE CRITERIA
+
+The MVP is not complete until:
+
+- A user can securely sign up and access their own records.
+- The user can create accounts, record income and expenses, and transfer between accounts.
+- The user can create person-wise loans and record partial repayments.
+- Cash/account balances and outstanding debts update correctly.
+- Transfers and loan repayments do not inflate income or expenses.
+- Daily, monthly, yearly, and custom-date summaries work.
+- The dashboard charts use real or explicitly labelled demo data.
+- Budgets and savings goals are functional if marked implemented.
+- Search, filters, validation, export, and key error states work.
+- The app is usable on desktop and mobile.
+- Database ownership controls have been implemented and reviewed.
+- Critical calculation tests pass in the available environment.
+- Setup instructions are sufficient for another developer to run the project.
+
+# 24. FINAL EXECUTION INSTRUCTIONS
+
+Begin by inspecting the current repository and reporting the intended architecture and implementation sequence briefly.
+
+Then implement the project. Do not stop at a design proposal, feature list, wireframe, screenshot, or static frontend.
+
+Build real forms, real persistence, real queries, tested financial calculations, useful error states, and working user flows.
+
+Do not fill the interface with fake buttons. If any feature is incomplete, label it clearly and list the remaining work.
+
+Do not hardcode dashboard metrics as real financial data. Seed sample values only in an explicit demo environment.
+
+Do not fabricate bank integration, SMS synchronization, AI processing, notifications, or automated scheduling. When a real external service is necessary, build the supported integration boundary and document the setup requirement.
+
+Avoid overengineering, but do not compromise financial correctness or data security to save time.
+
+At the end, provide:
+
+1. Summary of what was implemented
+2. Final folder structure
+3. Environment variables required
+4. Supabase project setup and database migration instructions
+5. Commands for development, tests, and production build
+6. Important design and architecture decisions
+7. Known limitations and unfinished items
+8. Results of commands and tests actually executed
+9. Recommended next implementation steps
+
+**Final product goal:** RAQAMORA should feel like a polished, reliable personal-finance product with a distinctive visual identity—not a generic dashboard template—and should make accurate personal money management easier for users in Pakistan.

@@ -1,0 +1,181 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* ---- shadcn token mappings ---- */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-app-sans);
+  --font-mono: var(--font-app-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* ---- RAQAMORA brand palette ---- */
+  --color-navy: #101c2c; /* midnight navy — deep surfaces, sidebar */
+  --color-navy-raised: #17273d; /* elevated navy surface */
+  --color-ivory: #f7f5ef; /* warm ivory app background */
+  --color-brand-emerald: #16836f; /* primary actions, positive money */
+  --color-brand-emerald-deep: #0d5f4f; /* emerald hover / strong text */
+  --color-gold: #c5a46d; /* champagne gold — brand accent only */
+  --color-gold-deep: #8a6d3b; /* readable gold on ivory */
+  --color-ink: #202a36; /* text primary */
+  --color-ink-soft: #747e8b; /* text secondary */
+  --color-hairline: #e4e0d5; /* hairline borders on ivory */
+  --color-danger-brand: #b4453a; /* overdue / negative */
+  --color-warn-brand: #b98a2f; /* warning amber */
+  --color-money-pos: #16836f;
+  --color-money-neg: #b4453a;
+
+  /* ---- Typography & elevation ---- */
+  --shadow-card: 0 1px 2px 0 rgb(16 28 44 / 0.04), 0 1px 3px 0 rgb(16 28 44 / 0.03);
+  --shadow-raised: 0 10px 30px -12px rgb(16 28 44 / 0.22), 0 2px 6px -2px rgb(16 28 44 / 0.08);
+}
+
+:root {
+  --radius: 0.625rem;
+  --font-app-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-app-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Light mode — warm ivory, white cards, navy ink, emerald primary */
+  --background: #f7f5ef;
+  --foreground: #202a36;
+  --card: #ffffff;
+  --card-foreground: #202a36;
+  --popover: #ffffff;
+  --popover-foreground: #202a36;
+  --primary: #16836f;
+  --primary-foreground: #ffffff;
+  --secondary: #efebe0;
+  --secondary-foreground: #202a36;
+  --muted: #f0ede3;
+  --muted-foreground: #747e8b;
+  --accent: #eae6d9;
+  --accent-foreground: #202a36;
+  --destructive: #b4453a;
+  --border: #e4e0d5;
+  --input: #dbd6c8;
+  --ring: #16836f;
+  --chart-1: #16836f;
+  --chart-2: #c5a46d;
+  --chart-3: #101c2c;
+  --chart-4: #b98a2f;
+  --chart-5: #b4453a;
+  --sidebar: #101c2c;
+  --sidebar-foreground: #f2efe6;
+  --sidebar-primary: #16836f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1a2c44;
+  --sidebar-accent-foreground: #f2efe6;
+  --sidebar-border: #24364e;
+  --sidebar-ring: #c5a46d;
+}
+
+.dark {
+  /* Dark mode — deep navy, kept premium and functional */
+  --background: #0c1521;
+  --foreground: #e9edf3;
+  --card: #121e2e;
+  --card-foreground: #e9edf3;
+  --popover: #121e2e;
+  --popover-foreground: #e9edf3;
+  --primary: #2ba48a;
+  --primary-foreground: #06120d;
+  --secondary: #1a293c;
+  --secondary-foreground: #e9edf3;
+  --muted: #162334;
+  --muted-foreground: #93a1b3;
+  --accent: #1a293c;
+  --accent-foreground: #e9edf3;
+  --destructive: #cd6a5e;
+  --border: #22334a;
+  --input: #2b3d55;
+  --ring: #2ba48a;
+  --chart-1: #2ba48a;
+  --chart-2: #d4b57e;
+  --chart-3: #8fa3bc;
+  --chart-4: #d09c3f;
+  --chart-5: #d0705f;
+  --sidebar: #0a121d;
+  --sidebar-foreground: #e9edf3;
+  --sidebar-primary: #2ba48a;
+  --sidebar-primary-foreground: #06120d;
+  --sidebar-accent: #142234;
+  --sidebar-accent-foreground: #e9edf3;
+  --sidebar-border: #1d2e44;
+  --sidebar-ring: #c5a46d;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-app-sans);
+  }
+  ::selection {
+    background: rgb(197 164 109 / 0.35);
+  }
+}
+
+@layer utilities {
+  /* Tabular numerals for all money figures */
+  .money {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.01em;
+  }
+  /* iOS safe area helper for bottom chrome */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

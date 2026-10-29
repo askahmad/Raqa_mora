@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// RAQAMORA — all monetary values stored as INTEGER paisa (1 PKR = 100 paisa)
+// to guarantee exact financial arithmetic (no binary floating point).
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  isDemo         Boolean  @default(false)
+  onboarded      Boolean  @default(false)
+  currency       String   @default("PKR")
+  locale         String   @default("en")
+  warnThreshold  Int      @default(80) // budget warning threshold %
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  accounts      Account[]
+  categories    Category[]
+  people        Person[]
+  transactions  Transaction[]
+  debts         Debt[]
+  budgets       Budget[]
+  goals         SavingsGoal[]
+  recurring     RecurringRule[]
+  notifications Notification[]
+}
+
+model Account {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  type           String // CASH | BANK | WALLETPAISA | JAZZCASH | SAVINGS | CUSTOM
+  openingBalance Int      @default(0) // paisa
+  color          String   @default("#16836F")
+  icon           String   @default("wallet")
+  archived       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  transactionsOut Transaction[] @relation("fromAccount")
+  transactionsIn  Transaction[] @relation("toAccount")
+
+  @@index([userId, archived])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  kind      String // INCOME | EXPENSE
+  icon      String   @default("tag")
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@index([userId, kind])
+}
+
+model Person {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  debts        Debt[]
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+model Debt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personId  String
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  direction String // RECEIVABLE (they owe me) | PAYABLE (I owe them)
+  principal Int // paisa
+  note      String?
+  dueDate   DateTime?
+  status    String   @default("ACTIVE") // ACTIVE | SETTLED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+
+  @@index([userId, personId, status])
+}
+
+model Transaction {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // INCOME | EXPENSE | TRANSFER | LENT | BORROWED | REPAYMENT_RECEIVED | REPAYMENT_MADE | REFUND | ADJUSTMENT
+  amount    Int // paisa, always positive; ADJUSTMENT uses signed direction via note+type
+  signed    Int       @default(1) // ADJUSTMENT: +1 increase | -1 decrease; else 1
+  date      DateTime
+  note      String?
+  reason    String? // for ADJUSTMENT audit
+  accountId String?
+  account   Account?  @relation("fromAccount", fields: [accountId], references: [id], onDelete: Restrict)
+  toAccountId String?
+  toAccount Account?  @relation("toAccount", fields: [toAccountId], references: [id], onDelete: Restrict)
+  categoryId String?
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  personId  String?
+  person    Person?   @relation(fields: [personId], references: [id], onDelete: SetNull)
+  debtId    String?
+  debt      Debt?     @relation(fields: [debtId], references: [id], onDelete: Restrict)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([userId, accountId])
+  @@index([userId, categoryId])
+  @@index([userId, personId])
+  @@index([debtId])
+}
+
+model Budget {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  amount     Int // paisa monthly limit
+  month      String // "YYYY-MM" Asia/Karachi
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, categoryId, month])
+  @@index([userId, month])
+}
+
+model SavingsGoal {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  targetAmount Int // paisa
+  targetDate   DateTime?
+  note         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  contributions Contribution[]
+
+  @@index([userId])
+}
+
+model Contribution {
+  id            String      @id @default(cuid())
+  goalId        String
+  goal          SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  amount        Int // paisa
+  date          DateTime
+  note          String?
+  accountId     String?
+  createdAt     DateTime    @default(now())
+
+  @@index([goalId])
+}
+
+model RecurringRule {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  type       String // INCOME | EXPENSE | TRANSFER
+  amount     Int // paisa
+  frequency  String // DAILY | WEEKLY | MONTHLY | YEARLY
+  nextDate   DateTime
+  endDate    DateTime?
+  note       String?
+  accountId  String?
+  toAccountId String?
+  categoryId String?
+  active     Boolean   @default(true)
+  lastRun    DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId, active])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // BUDGET_WARN | BUDGET_OVER | DEBT_DUE | DEBT_OVERDUE | GOAL_DONE | RECURRING_DUE | INFO
+  title     String
+  message   String
+  refId     String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
