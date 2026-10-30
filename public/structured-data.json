@@ -1,0 +1,41 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://raqamora.vercel.app/#webapp",
+      "url": "https://raqamora.vercel.app",
+      "name": "RAQAMORA",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All (Web, Android, iOS, Windows, macOS, Linux)",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "softwareVersion": "1.0.0",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "PKR"
+      },
+      "description": "Premium personal finance application for Pakistan. Track income, expenses, lends & borrowings across Cash, Bank, Easypaisa & JazzCash with person-wise ledgers, offline capability, and paisa-perfect arithmetic.",
+      "featureList": [
+        "Paisa-perfect exact arithmetic (1 PKR = 100 paisa)",
+        "Easypaisa, JazzCash, and Pakistani Bank support",
+        "Offline PWA Support with automatic background live sync",
+        "Person-wise Udhaar and Khata ledger management",
+        "Category budgets and automatic 80% warning alerts",
+        "Savings goals and recurring payment scheduling"
+      ],
+      "inLanguage": ["en", "ur"]
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://raqamora.vercel.app/#organization",
+      "name": "RAQAMORA",
+      "url": "https://raqamora.vercel.app",
+      "logo": "https://raqamora.vercel.app/icon-512.png",
+      "areaServed": {
+        "@type": "Country",
+        "name": "Pakistan"
+      }
+    }
+  ]
+}
