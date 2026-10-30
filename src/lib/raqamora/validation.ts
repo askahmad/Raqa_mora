@@ -4,11 +4,17 @@ import { TXN_TYPES, ACCOUNT_TYPES } from "@/lib/raqamora/finance";
 /** Positive integer paisa amount. */
 const paisa = z.number({ message: "Amount is required" }).int().positive("Amount must be greater than zero");
 
-export const signupSchema = z.object({
-  name: z.string().min(1, "Name is required").max(80),
-  email: z.string().email("Enter a valid email").max(160),
-  password: z.string().min(8, "Password must be at least 8 characters").max(128),
-});
+export const signupSchema = z
+  .object({
+    name: z.string().min(1, "Name is required").max(80),
+    email: z.string().email("Enter a valid email address").max(160),
+    password: z.string().min(8, "Password must be at least 8 characters").max(128),
+    confirmPassword: z.string().min(1, "Confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),

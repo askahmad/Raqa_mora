@@ -150,7 +150,7 @@ function SignupForm({ onAuthed }: { onAuthed: (user: SessionUser) => void }) {
   const [serverError, setServerError] = React.useState<string | null>(null);
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -206,6 +206,20 @@ function SignupForm({ onAuthed }: { onAuthed: (user: SessionUser) => void }) {
                 <Input type="password" autoComplete="new-password" placeholder="At least 8 characters" {...field} />
               </FormControl>
               <FormDescription>Use at least 8 characters.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirm Password</FormLabel>
+              <FormControl>
+                <Input type="password" autoComplete="new-password" placeholder="Re-enter your password" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
