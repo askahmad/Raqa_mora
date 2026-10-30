@@ -142,3 +142,4 @@ export function InstallPwaButton({ className }: { className?: string }) {
     </Button>
   );
 }
+
