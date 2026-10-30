@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DemoButton, Money } from "@/components/raqamora/kit";
 import { RaqamoraWordmark } from "@/components/raqamora/brand";
+import { LanguageSwitcher } from "@/components/raqamora/language-switcher";
 
 export interface LandingProps {
   onEnterApp: (user: SessionUser) => void;
@@ -212,6 +213,7 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
           <RaqamoraWordmark size="sm" />
           <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <Button variant="ghost" size="sm" className="min-h-9" onClick={() => onSignIn("login")}>
               Sign in
             </Button>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaRegister } from "@/components/raqamora/pwa-register";
+import { LanguageProvider } from "@/lib/raqamora/i18n";
 
 const SITE_URL = "https://raqamora.vercel.app";
 const APP_TITLE = "RAQAMORA — Personal Finance & Money Manager Pakistan";
@@ -136,9 +137,11 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background font-sans text-foreground antialiased">
-        <PwaRegister />
-        {children}
-        <Toaster richColors position="top-right" />
+        <LanguageProvider>
+          <PwaRegister />
+          {children}
+          <Toaster richColors position="top-right" />
+        </LanguageProvider>
       </body>
     </html>
   );

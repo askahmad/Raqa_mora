@@ -36,6 +36,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Monogram, RaqamoraWordmark } from "@/components/raqamora/brand";
 import { InstallPwaButton } from "@/components/raqamora/pwa-register";
+import { LanguageSwitcher } from "@/components/raqamora/language-switcher";
+import { useLanguage } from "@/lib/raqamora/i18n";
 
 export type { ViewKey } from "@/components/raqamora/view-props";
 
@@ -87,7 +89,8 @@ export function AppShell({ user, view, onViewChange, unreadCount, onQuickAdd, on
   const [collapsed, setCollapsed] = React.useState(false);
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const reduced = useReducedMotion();
-  const meta = VIEW_META[view];
+  const { t, isUrdu } = useLanguage();
+  const meta = t.viewMeta[view] ?? VIEW_META[view];
 
   const go = React.useCallback(
     (key: ViewKey) => {
@@ -100,6 +103,7 @@ export function AppShell({ user, view, onViewChange, unreadCount, onQuickAdd, on
   const navButton = (item: { key: ViewKey; label: string; icon: LucideIcon }, opts: { collapsed?: boolean; inSheet?: boolean } = {}) => {
     const active = view === item.key;
     const Icon = item.icon;
+    const label = t.nav[item.key] ?? item.label;
     const showBadge = item.key === "notifications" && unreadCount > 0;
     return (
       <button
@@ -119,7 +123,7 @@ export function AppShell({ user, view, onViewChange, unreadCount, onQuickAdd, on
         <Icon className="size-4 shrink-0" aria-hidden />
         {!opts.collapsed ? (
           <>
-            <span className="truncate">{item.label}</span>
+            <span className="truncate">{label}</span>
             {showBadge ? (
               <span className="ml-auto rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-semibold leading-none text-navy">
                 {unreadCount > 99 ? "99+" : unreadCount}
@@ -280,10 +284,11 @@ export function AppShell({ user, view, onViewChange, unreadCount, onQuickAdd, on
             </div>
 
             <div className="ml-auto flex items-center gap-1.5">
+              <LanguageSwitcher />
               <InstallPwaButton />
               <Button onClick={onQuickAdd} size="sm" className="hidden min-h-9 sm:inline-flex">
                 <Plus className="size-4" aria-hidden />
-                Quick add
+                {t.quickAdd}
               </Button>
               <Button
                 variant="ghost"
@@ -370,6 +375,8 @@ function MobileTab({
   onClick: () => void;
 }) {
   const Icon = item.icon;
+  const { t } = useLanguage();
+  const label = item.key in t.nav ? t.nav[item.key] : item.label;
   return (
     <button
       type="button"
@@ -381,7 +388,7 @@ function MobileTab({
       )}
     >
       <Icon className="size-5" aria-hidden />
-      {item.label}
+      {label}
     </button>
   );
 }

@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RaqamoraWordmark } from "@/components/raqamora/brand";
 import { DemoButton, Spinner } from "@/components/raqamora/kit";
+import { LanguageSwitcher } from "@/components/raqamora/language-switcher";
 
 export type AuthMode = "login" | "signup";
 
@@ -38,8 +39,9 @@ export function AuthScreen({ initialMode = "login", onAuthed }: AuthScreenProps)
   return (
     <div className="flex min-h-dvh items-center justify-center bg-ivory px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex justify-center">
+        <div className="mb-6 flex items-center justify-between">
           <RaqamoraWordmark size="md" />
+          <LanguageSwitcher />
         </div>
 
         <div className="rounded-2xl border border-hairline bg-card p-5 shadow-raised sm:p-6">
