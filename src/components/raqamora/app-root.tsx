@@ -187,17 +187,24 @@ export function AppRoot() {
     );
   }
 
+  const handleUnauthorizedCtx = React.useCallback(() => {
+    goGuest();
+  }, [goGuest]);
+
   if (!user) return <BootScreen />;
 
   const ActiveView = VIEW_COMPONENTS[view];
-  const ctx: AppContextValue = {
-    user,
-    setUser,
-    view,
-    setView,
-    refreshUnread,
-    handleUnauthorized: () => goGuest(),
-  };
+  const ctx: AppContextValue = React.useMemo(
+    () => ({
+      user,
+      setUser,
+      view,
+      setView,
+      refreshUnread,
+      handleUnauthorized: handleUnauthorizedCtx,
+    }),
+    [user, view, refreshUnread, handleUnauthorizedCtx],
+  );
 
   return (
     <AppContext.Provider value={ctx}>

@@ -27,6 +27,7 @@ import type { NotificationRow } from "@/lib/raqamora/types";
 import { useApp } from "@/components/raqamora/app-root";
 import { EmptyState, PageHeader, SkeletonList, Spinner } from "@/components/raqamora/kit";
 import type { ViewKey, ViewProps } from "@/components/raqamora/view-props";
+import { useUnauthorizedGuard } from "@/components/raqamora/views/transaction-quick-add";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,8 @@ function relativeTime(iso: string): string {
 /* -------------------------------------------------------------------- View */
 
 export default function NotificationsView(_props: ViewProps) {
-  const { setView, refreshUnread, handleUnauthorized } = useApp();
+  const { setView, refreshUnread } = useApp();
+  const guard = useUnauthorizedGuard();
   const [items, setItems] = React.useState<NotificationRow[] | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [checking, setChecking] = React.useState(false);
@@ -84,13 +86,15 @@ export default function NotificationsView(_props: ViewProps) {
       const { notifications } = await apiGet<{ notifications: NotificationRow[] }>("/api/notifications");
       setItems(notifications);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        handleUnauthorized();
-        return;
-      }
+      if (guard(err)) return;
       setLoadError(err instanceof Error ? err.message : "Could not load notifications");
     }
-  }, [handleUnauthorized]);
+  }, [guard]);
+
+  const refreshUnreadRef = React.useRef(refreshUnread);
+  React.useEffect(() => {
+    refreshUnreadRef.current = refreshUnread;
+  }, [refreshUnread]);
 
   /* First visit this session: regenerate alerts, then load the list. */
   React.useEffect(() => {
@@ -100,21 +104,18 @@ export default function NotificationsView(_props: ViewProps) {
         autoGenerateStarted = true;
         try {
           await apiSend("/api/notifications/generate", "POST");
-          if (alive) void refreshUnread();
+          if (alive) void refreshUnreadRef.current();
         } catch (err) {
-          if (err instanceof ApiError && err.status === 401) {
-            if (alive) handleUnauthorized();
-            return;
-          }
+          if (guard(err)) return;
           /* non-fatal — the list still loads */
         }
       }
-      await load();
+      if (alive) await load();
     })();
     return () => {
       alive = false;
     };
-  }, [load, refreshUnread, handleUnauthorized]);
+  }, [load, guard]);
 
   async function checkNow() {
     setChecking(true);
