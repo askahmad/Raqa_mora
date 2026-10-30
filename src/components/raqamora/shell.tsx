@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Monogram, RaqamoraWordmark } from "@/components/raqamora/brand";
+import { InstallPwaButton } from "@/components/raqamora/pwa-register";
 
 export type { ViewKey } from "@/components/raqamora/view-props";
 
@@ -279,6 +280,7 @@ export function AppShell({ user, view, onViewChange, unreadCount, onQuickAdd, on
             </div>
 
             <div className="ml-auto flex items-center gap-1.5">
+              <InstallPwaButton />
               <Button onClick={onQuickAdd} size="sm" className="hidden min-h-9 sm:inline-flex">
                 <Plus className="size-4" aria-hidden />
                 Quick add

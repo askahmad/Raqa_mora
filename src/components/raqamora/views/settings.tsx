@@ -13,6 +13,7 @@ import {
   LogOut,
   Save,
   ShieldAlert,
+  Smartphone,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ import { useApp } from "@/components/raqamora/app-root";
 import { ConfirmDialog, PageHeader, SectionCard, Spinner } from "@/components/raqamora/kit";
 import { RaqamoraWordmark } from "@/components/raqamora/brand";
 import type { ViewProps } from "@/components/raqamora/view-props";
+import { InstallPwaButton } from "@/components/raqamora/pwa-register";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -341,6 +343,12 @@ export default function SettingsView({ user }: ViewProps) {
                 Erase data
               </Button>
             }
+          />
+          <SettingsRow
+            icon={Smartphone}
+            title="Install App on Device"
+            description="Install RAQAMORA on your phone or laptop. Works offline without internet and automatically syncs when online."
+            action={<InstallPwaButton />}
           />
         </div>
       </section>

@@ -1,4 +1,10 @@
-/** Tiny typed fetch wrapper for RAQAMORA API routes. */
+/** Tiny typed fetch wrapper for RAQAMORA API routes with offline resilience & auto-sync. */
+import {
+  enqueueMutation,
+  getCachedGet,
+  setCachedGet,
+} from "@/lib/raqamora/offline-sync";
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -22,18 +28,52 @@ async function handle<T>(res: Response): Promise<T> {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(path, { credentials: "same-origin", cache: "no-store" });
-  return handle<T>(res);
+  try {
+    const res = await fetch(path, { credentials: "same-origin", cache: "no-store" });
+    const data = await handle<T>(res);
+    setCachedGet(path, data);
+    return data;
+  } catch (err) {
+    // If offline or network request failed, return cached data if available
+    const cached = getCachedGet<T>(path);
+    if (cached !== null) {
+      return cached;
+    }
+    throw err;
+  }
 }
 
-export async function apiSend<T>(path: string, method: "POST" | "PATCH" | "DELETE", payload?: unknown): Promise<T> {
-  const res = await fetch(path, {
-    method,
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: payload === undefined ? undefined : JSON.stringify(payload),
-  });
-  return handle<T>(res);
+export async function apiSend<T>(
+  path: string,
+  method: "POST" | "PATCH" | "DELETE",
+  payload?: unknown,
+  title?: string
+): Promise<T> {
+  // If explicitly offline
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    enqueueMutation(path, method, payload, title);
+    return { ok: true, offline: true } as T;
+  }
+
+  try {
+    const res = await fetch(path, {
+      method,
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: payload === undefined ? undefined : JSON.stringify(payload),
+    });
+    return await handle<T>(res);
+  } catch (err) {
+    const isNetworkError =
+      (err instanceof TypeError && err.message.toLowerCase().includes("fetch")) ||
+      (typeof navigator !== "undefined" && !navigator.onLine);
+
+    if (isNetworkError) {
+      enqueueMutation(path, method, payload, title);
+      return { ok: true, offline: true } as T;
+    }
+    throw err;
+  }
 }
 
 export function qs(params: Record<string, string | number | undefined | null>): string {
