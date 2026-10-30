@@ -129,10 +129,7 @@ export default function NotificationsView(_props: ViewProps) {
       await load();
       await refreshUnread();
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        handleUnauthorized();
-        return;
-      }
+      if (guard(err)) return;
       toast.error(err instanceof Error ? err.message : "Could not check for alerts");
     } finally {
       setChecking(false);
@@ -147,10 +144,7 @@ export default function NotificationsView(_props: ViewProps) {
       await refreshUnread();
       toast.success("All notifications marked as read");
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        handleUnauthorized();
-        return;
-      }
+      if (guard(err)) return;
       toast.error(err instanceof Error ? err.message : "Could not mark everything read");
     } finally {
       setMarkingAll(false);
@@ -164,10 +158,7 @@ export default function NotificationsView(_props: ViewProps) {
       await apiSend(`/api/notifications/${n.id}`, "PATCH", { read: true });
       await refreshUnread();
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        handleUnauthorized();
-        return;
-      }
+      if (guard(err)) return;
       void load(); // revert optimistic update
     }
   }
