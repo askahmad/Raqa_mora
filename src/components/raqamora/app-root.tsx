@@ -170,6 +170,18 @@ export function AppRoot() {
     goGuest();
   }
 
+  const ctx: AppContextValue | null = React.useMemo(() => {
+    if (!user) return null;
+    return {
+      user,
+      setUser,
+      view,
+      setView,
+      refreshUnread,
+      handleUnauthorized: handleUnauthorizedCtx,
+    };
+  }, [user, view, refreshUnread, handleUnauthorizedCtx]);
+
   if (phase === "loading") return <BootScreen />;
 
   if (phase === "guest") {
@@ -191,20 +203,9 @@ export function AppRoot() {
     );
   }
 
-  if (!user) return <BootScreen />;
+  if (!user || !ctx) return <BootScreen />;
 
   const ActiveView = VIEW_COMPONENTS[view];
-  const ctx: AppContextValue = React.useMemo(
-    () => ({
-      user,
-      setUser,
-      view,
-      setView,
-      refreshUnread,
-      handleUnauthorized: handleUnauthorizedCtx,
-    }),
-    [user, view, refreshUnread, handleUnauthorizedCtx],
-  );
 
   return (
     <AppContext.Provider value={ctx}>
