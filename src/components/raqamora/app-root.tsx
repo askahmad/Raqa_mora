@@ -122,6 +122,10 @@ export function AppRoot() {
     [goGuest],
   );
 
+  const handleUnauthorizedCtx = React.useCallback(() => {
+    goGuest();
+  }, [goGuest]);
+
   /* Boot: who am I? */
   React.useEffect(() => {
     let alive = true;
@@ -186,10 +190,6 @@ export function AppRoot() {
       />
     );
   }
-
-  const handleUnauthorizedCtx = React.useCallback(() => {
-    goGuest();
-  }, [goGuest]);
 
   if (!user) return <BootScreen />;
 
