@@ -32,6 +32,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { ApiError, apiGet, apiSend, qs } from "@/lib/raqamora/client";
+import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { formatPKR, parseRupeesToPaisa } from "@/lib/raqamora/money";
 import { personSchema } from "@/lib/raqamora/validation";
 import type { AccountWithBalance, DebtWithOutstanding, PersonRow, TxnRow } from "@/lib/raqamora/types";
@@ -1729,7 +1730,8 @@ function PersonBalanceLines({ person, align = "left" }: { person: PersonRow; ali
 
 export default function PeopleView(_props: ViewProps) {
   const guard = useApiGuard();
-  const [people, setPeople] = React.useState<PersonRow[] | null>(null);
+  const cachedPeople = getCachedGet<{ people: PersonRow[] }>("/api/people");
+  const [people, setPeople] = React.useState<PersonRow[] | null>(() => cachedPeople?.people ?? null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);

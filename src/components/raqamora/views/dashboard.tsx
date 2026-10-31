@@ -49,6 +49,7 @@ import { formatPKR } from "@/lib/raqamora/money";
 import { accountDelta, TXN_TYPE_LABELS, type TxnType } from "@/lib/raqamora/finance";
 import type { DashboardData, SessionUser, TxnRow } from "@/lib/raqamora/types";
 import { ApiError, apiGet } from "@/lib/raqamora/client";
+import { getCachedGet } from "@/lib/raqamora/offline-sync";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -423,11 +424,13 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
   const [customFrom, setCustomFrom] = React.useState("");
   const [customTo, setCustomTo] = React.useState("");
   const [customApplied, setCustomApplied] = React.useState<{ from: string; to: string } | null>(null);
-  const [data, setData] = React.useState<DashboardData | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [data, setData] = React.useState<DashboardData | null>(() => {
+    return getCachedGet<DashboardData>(`/api/dashboard?range=month`) ?? null;
+  });
+  const [loading, setLoading] = React.useState<boolean>(() => !data);
   const [error, setError] = React.useState<string | null>(null);
 
-  const dataRef = React.useRef<DashboardData | null>(null);
+  const dataRef = React.useRef<DashboardData | null>(data);
   const onUnauthorizedRef = React.useRef(handleUnauthorized);
   React.useEffect(() => {
     onUnauthorizedRef.current = handleUnauthorized;
@@ -444,7 +447,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
 
   const load = React.useCallback(
     async (background = false) => {
-      setLoading(true);
+      if (!dataRef.current && !data) setLoading(true);
       setError(null);
       try {
         const payload = await apiGet<DashboardData>(`/api/dashboard?${query}`);
@@ -457,12 +460,12 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
         }
         const msg = err instanceof Error ? err.message : "Something went wrong while loading the dashboard.";
         if (background && dataRef.current) toast.error(msg);
-        else setError(msg);
+        else if (!dataRef.current) setError(msg);
       } finally {
         setLoading(false);
       }
     },
-    [query],
+    [query, data],
   );
 
   React.useEffect(() => {

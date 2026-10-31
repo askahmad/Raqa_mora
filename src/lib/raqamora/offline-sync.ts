@@ -84,30 +84,62 @@ export function setCachedUser(user: SessionUser | null): void {
   }
 }
 
-/* ------------------------------------------------------------- Offline Read Cache */
+/* ------------------------------------------------------------- Offline Read Cache (L1 Memory + L2 Storage) */
+
+const memoryCache = new Map<string, { data: unknown; cachedAt: number }>();
+
+export function invalidateCache(pattern?: string | RegExp): void {
+  if (!pattern) {
+    memoryCache.clear();
+    return;
+  }
+  for (const key of Array.from(memoryCache.keys())) {
+    if (typeof pattern === "string" ? key.includes(pattern) : pattern.test(key)) {
+      memoryCache.delete(key);
+    }
+  }
+}
 
 export function setCachedGet(path: string, data: unknown): void {
   if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(
-      `${CACHE_PREFIX}${path}`,
-      JSON.stringify({
-        cachedAt: Date.now(),
-        data,
-      }),
-    );
-  } catch {
-    /* ignore storage quota limits */
+  const record = { cachedAt: Date.now(), data };
+  // 1. Instant L1 memory write (0ms)
+  memoryCache.set(path, record);
+
+  // 2. Non-blocking asynchronous L2 localStorage write
+  const saveToStorage = () => {
+    try {
+      localStorage.setItem(`${CACHE_PREFIX}${path}`, JSON.stringify(record));
+    } catch {
+      /* ignore storage quota limits */
+    }
+  };
+
+  if (typeof requestIdleCallback !== "undefined") {
+    requestIdleCallback(saveToStorage, { timeout: 1000 });
+  } else {
+    setTimeout(saveToStorage, 0);
   }
 }
 
 export function getCachedGet<T>(path: string): T | null {
   if (typeof window === "undefined") return null;
+  // 1. Fast L1 Memory Cache hit (0ms)
+  const mem = memoryCache.get(path);
+  if (mem) {
+    return mem.data as T;
+  }
+
+  // 2. L2 LocalStorage fallback
   try {
     const raw = localStorage.getItem(`${CACHE_PREFIX}${path}`);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return (parsed?.data as T) ?? null;
+    if (parsed?.data !== undefined) {
+      memoryCache.set(path, { data: parsed.data, cachedAt: parsed.cachedAt || Date.now() });
+      return parsed.data as T;
+    }
+    return null;
   } catch {
     return null;
   }

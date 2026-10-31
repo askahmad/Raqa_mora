@@ -199,6 +199,27 @@ export function AppRoot() {
     }
   }, [phase]);
 
+  // Pre-warm primary reference caches in memory so all view transitions and Quick Add are instant (0ms)
+  React.useEffect(() => {
+    if (phase !== "app") return;
+    const warmCaches = () => {
+      void Promise.allSettled([
+        apiGet("/api/accounts"),
+        apiGet("/api/categories"),
+        apiGet("/api/people"),
+        apiGet("/api/dashboard?range=month"),
+        apiGet("/api/transactions?page=1&pageSize=25&sort=date_desc"),
+      ]);
+    };
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        (window as any).requestIdleCallback(warmCaches, { timeout: 1500 });
+      } else {
+        setTimeout(warmCaches, 600);
+      }
+    }
+  }, [phase]);
+
   /* Unread notifications: fetch on app entry, then every 60s */
   const refreshUnread = React.useCallback(async () => {
     try {

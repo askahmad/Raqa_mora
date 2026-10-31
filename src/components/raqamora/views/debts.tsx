@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { apiGet, apiSend } from "@/lib/raqamora/client";
+import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { formatPKR } from "@/lib/raqamora/money";
 import type { DebtWithOutstanding, PersonRow } from "@/lib/raqamora/types";
 import {
@@ -67,8 +68,10 @@ function sortDebts(rows: DebtWithOutstanding[], key: SortKey): DebtWithOutstandi
 
 export default function DebtsView({ onViewChange }: ViewProps) {
   const guard = useApiGuard();
-  const [debts, setDebts] = React.useState<DebtWithOutstanding[] | null>(null);
-  const [people, setPeople] = React.useState<PersonRow[]>([]);
+  const cachedDebts = getCachedGet<{ debts: DebtWithOutstanding[] }>("/api/debts");
+  const cachedPeople = getCachedGet<{ people: PersonRow[] }>("/api/people");
+  const [debts, setDebts] = React.useState<DebtWithOutstanding[] | null>(() => cachedDebts?.debts ?? null);
+  const [people, setPeople] = React.useState<PersonRow[]>(() => cachedPeople?.people ?? []);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
   const [tab, setTab] = React.useState<TabKey>("receivable");

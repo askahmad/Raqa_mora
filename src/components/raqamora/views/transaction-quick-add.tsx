@@ -36,6 +36,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { ApiError, apiGet, apiSend, qs } from "@/lib/raqamora/client";
+import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { formatPKR, formatRupees } from "@/lib/raqamora/money";
 import { TXN_TYPE_LABELS, txnFieldRequirements, type TxnType } from "@/lib/raqamora/finance";
 import { transactionSchema } from "@/lib/raqamora/validation";
@@ -249,10 +250,16 @@ function getTopTab(t: TxnType): TopTab {
 export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }: TransactionQuickAddProps) {
   const guard = useUnauthorizedGuard();
 
-  const [accounts, setAccounts] = React.useState<AccountWithBalance[]>([]);
-  const [categories, setCategories] = React.useState<CategoryRow[]>([]);
-  const [people, setPeople] = React.useState<PersonRow[]>([]);
-  const [loadState, setLoadState] = React.useState<"loading" | "ready" | "error">("loading");
+  const cachedAccounts = getCachedGet<{ accounts: AccountWithBalance[] }>("/api/accounts")?.accounts;
+  const cachedCategories = getCachedGet<{ categories: CategoryRow[] }>("/api/categories")?.categories;
+  const cachedPeople = getCachedGet<{ people: PersonRow[] }>("/api/people")?.people;
+
+  const hasCache = Boolean(cachedAccounts && cachedAccounts.length > 0);
+
+  const [accounts, setAccounts] = React.useState<AccountWithBalance[]>(() => cachedAccounts?.filter((a) => !a.archived) ?? []);
+  const [categories, setCategories] = React.useState<CategoryRow[]>(() => cachedCategories?.filter((c) => !c.archived) ?? []);
+  const [people, setPeople] = React.useState<PersonRow[]>(() => cachedPeople ?? []);
+  const [loadState, setLoadState] = React.useState<"loading" | "ready" | "error">(hasCache ? "ready" : "loading");
 
   const [showNote, setShowNote] = React.useState(false);
   const [accountPopoverOpen, setAccountPopoverOpen] = React.useState(false);
@@ -301,7 +308,9 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
   const debtReqRef = React.useRef(0);
 
   const loadBase = React.useCallback(() => {
-    setLoadState("loading");
+    if (!hasCache && accounts.length === 0) {
+      setLoadState("loading");
+    }
     Promise.all([
       apiGet<{ accounts: AccountWithBalance[] }>("/api/accounts"),
       apiGet<{ categories: CategoryRow[] }>("/api/categories"),
@@ -330,9 +339,9 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
       })
       .catch((err) => {
         if (guard(err)) return;
-        setLoadState("error");
+        if (accounts.length === 0) setLoadState("error");
       });
-  }, [guard, defaultType, getValues, setValue]);
+  }, [guard, defaultType, getValues, setValue, hasCache, accounts.length]);
 
   React.useEffect(() => {
     loadBase();

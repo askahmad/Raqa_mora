@@ -27,6 +27,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { ApiError, apiGet, apiSend, qs } from "@/lib/raqamora/client";
+import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { formatPKR, parseRupeesToPaisa } from "@/lib/raqamora/money";
 import {
   ACCOUNT_TYPES,
@@ -124,8 +125,9 @@ function typeLabel(t: TxnRow): string {
 export default function AccountsView(_props: ViewProps) {
   const guard = useUnauthorizedGuard();
 
-  const [accounts, setAccounts] = React.useState<AccountWithBalance[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const cachedAccounts = getCachedGet<{ accounts: AccountWithBalance[] }>("/api/accounts");
+  const [accounts, setAccounts] = React.useState<AccountWithBalance[]>(() => cachedAccounts?.accounts ?? []);
+  const [loading, setLoading] = React.useState<boolean>(() => !cachedAccounts);
   const [error, setError] = React.useState<string | null>(null);
   const [reloadToken, setReloadToken] = React.useState(0);
 
@@ -143,7 +145,7 @@ export default function AccountsView(_props: ViewProps) {
   /* ---- fetch accounts ---- */
   React.useEffect(() => {
     let alive = true;
-    setLoading(true);
+    if (accounts.length === 0) setLoading(true);
     setError(null);
     apiGet<{ accounts: AccountWithBalance[] }>("/api/accounts")
       .then(({ accounts: list }) => {

@@ -24,6 +24,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { ApiError, apiGet, apiSend, qs } from "@/lib/raqamora/client";
+import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { formatPKR } from "@/lib/raqamora/money";
 import { TXN_TYPES, TXN_TYPE_LABELS, type TxnType } from "@/lib/raqamora/finance";
 import type {
@@ -182,7 +183,16 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
     accounts: AccountWithBalance[];
     categories: CategoryRow[];
     people: PersonRow[];
-  }>({ accounts: [], categories: [], people: [] });
+  }>(() => {
+    const a = getCachedGet<{ accounts: AccountWithBalance[] }>("/api/accounts");
+    const c = getCachedGet<{ categories: CategoryRow[] }>("/api/categories");
+    const p = getCachedGet<{ people: PersonRow[] }>("/api/people");
+    return {
+      accounts: a?.accounts ?? [],
+      categories: c?.categories ?? [],
+      people: p?.people ?? [],
+    };
+  });
 
   React.useEffect(() => {
     let alive = true;
@@ -206,9 +216,14 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
   const [filters, setFilters] = React.useState<Filters>(EMPTY_FILTERS);
   const [qInput, setQInput] = React.useState("");
   const [page, setPage] = React.useState(1);
-  const [txns, setTxns] = React.useState<TxnRow[]>([]);
-  const [total, setTotal] = React.useState(0);
-  const [loading, setLoading] = React.useState(true);
+
+  const cachedInitial = React.useMemo(() => {
+    return getCachedGet<{ txns: TxnRow[]; total: number }>(`/api/transactions?page=1&pageSize=${PAGE_SIZE}&sort=date_desc`);
+  }, []);
+
+  const [txns, setTxns] = React.useState<TxnRow[]>(() => cachedInitial?.txns ?? []);
+  const [total, setTotal] = React.useState<number>(() => cachedInitial?.total ?? 0);
+  const [loading, setLoading] = React.useState<boolean>(() => !cachedInitial);
   const [error, setError] = React.useState<string | null>(null);
   const [reloadToken, setReloadToken] = React.useState(0);
 
@@ -225,7 +240,7 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
   /* server-paginated fetch */
   React.useEffect(() => {
     let alive = true;
-    setLoading(true);
+    if (txns.length === 0) setLoading(true);
     setError(null);
     apiGet<{ txns: TxnRow[]; total: number; page: number; pageSize: number }>(
       `/api/transactions${listQuery(filters, page)}`,
