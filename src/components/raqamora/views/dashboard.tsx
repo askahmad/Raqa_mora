@@ -15,6 +15,7 @@ import {
   ChevronRight,
   CreditCard,
   HandCoins,
+  PiggyBank,
   Plus,
   Receipt,
   Repeat,
@@ -544,6 +545,12 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
   const bu = d.budgetUsage;
   const overallTone = budgetTone(bu.percent, user.warnThreshold);
 
+  const currentNetSavings = d.summary.income - d.summary.netExpense;
+  const prevNetSavings = d.comparison
+    ? (d.comparison.netSavings ?? (d.comparison.income - d.comparison.expense))
+    : 0;
+  const savingsDiff = currentNetSavings - prevNetSavings;
+
   const metrics: Array<{
     key: string;
     label: string;
@@ -788,6 +795,71 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                 />
               </motion.div>
             ))}
+          </div>
+
+          {/* ---------------------------------- monthly savings & comparison */}
+          <div className="rounded-2xl border border-hairline/80 bg-gradient-to-r from-brand-emerald/10 via-card to-gold/10 p-4 shadow-card">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-emerald/15 text-brand-emerald-deep dark:text-[#53c6ac]">
+                  <PiggyBank className="size-5" aria-hidden />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-ink">
+                      Net Savings ({d.period.label})
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[10px] font-semibold",
+                        currentNetSavings >= 0
+                          ? "border-brand-emerald/30 bg-brand-emerald/10 text-brand-emerald-deep dark:text-[#53c6ac]"
+                          : "border-danger-brand/30 bg-danger-brand/10 text-danger-brand",
+                      )}
+                    >
+                      {currentNetSavings >= 0 ? "Saved" : "Overspent"}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-ink-soft mt-0.5">
+                    {d.comparison ? (
+                      savingsDiff >= 0 ? (
+                        <span>
+                          Previous period se <strong className="font-semibold text-money-pos">+{formatPKR(savingsDiff)}</strong> ziada bachat (savings) hui! 🎉
+                        </span>
+                      ) : (
+                        <span>
+                          Previous period se <strong className="font-semibold text-money-neg">−{formatPKR(Math.abs(savingsDiff))}</strong> kam save hua.
+                        </span>
+                      )
+                    ) : (
+                      "Record your income and expenses to track your monthly savings."
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-hairline/60">
+                <div className="text-left sm:text-right">
+                  <span className="text-[10px] uppercase font-semibold text-ink-soft">Current Saved</span>
+                  <div>
+                    <Money
+                      value={currentNetSavings}
+                      colored={currentNetSavings !== 0}
+                      size="lg"
+                      className="font-extrabold text-xl"
+                    />
+                  </div>
+                </div>
+                {d.comparison && (
+                  <div className="text-left sm:text-right pl-3 border-l border-hairline/60">
+                    <span className="text-[10px] uppercase font-semibold text-ink-soft">Previous</span>
+                    <div>
+                      <Money value={prevNetSavings} size="sm" className="font-medium text-ink-soft" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* -------------------------------------------- money owed band */}

@@ -531,6 +531,15 @@ function AccountFormDialog({
   const guard = useUnauthorizedGuard();
   const isEdit = account !== null;
   const [saving, setSaving] = React.useState(false);
+  const [currentBalance, setCurrentBalance] = React.useState<string>("");
+
+  React.useEffect(() => {
+    if (account) {
+      setCurrentBalance((account.balance / 100).toString());
+    } else {
+      setCurrentBalance("");
+    }
+  }, [account, open]);
 
   const form = useForm<AccountFormInput, unknown, AccountFormOutput>({
     resolver: zodResolver(accountSchema),
@@ -551,13 +560,24 @@ function AccountFormDialog({
     setSaving(true);
     try {
       if (isEdit && account) {
-        // PATCH supports name/color/icon/archived only — balance corrections
-        // happen through the Adjust balance (reconciliation) flow.
         await apiSend(`/api/accounts/${account.id}`, "PATCH", {
           name: values.name.trim(),
           color: values.color,
           icon: values.icon,
         });
+
+        const newBalancePaisa = parseRupeesToPaisa(currentBalance);
+        if (newBalancePaisa !== null && newBalancePaisa !== account.balance) {
+          const diff = newBalancePaisa - account.balance;
+          await apiSend("/api/transactions", "POST", {
+            type: "ADJUSTMENT",
+            amountRupees: Math.abs(diff) / 100,
+            adjustDirection: diff > 0 ? "INCREASE" : "DECREASE",
+            accountId: account.id,
+            reason: `Balance edited on ${dayFmt.format(new Date())} — recorded ${formatPKR(account.balance)}, new ${formatPKR(newBalancePaisa)}`,
+            date: new Date().toISOString(),
+          });
+        }
         onSaved(`${values.name.trim()} updated`);
       } else {
         await apiSend("/api/accounts", "POST", {
@@ -587,7 +607,7 @@ function AccountFormDialog({
           <DialogTitle className="text-base">{isEdit ? `Edit ${account?.name}` : "New account"}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Rename or restyle the account. Correct the running balance with Adjust balance."
+              ? "Update name, styling, or current balance of this account."
               : "A wallet, bank account or mobile wallet that you track in RAQAMORA."}
           </DialogDescription>
         </DialogHeader>
@@ -641,11 +661,21 @@ function AccountFormDialog({
               />
             </Field>
           ) : (
-            <p className="rounded-lg border border-hairline bg-muted/40 px-3 py-2.5 text-[12px] leading-snug text-ink-soft">
-              Opening balance {formatPKR(account?.openingBalance ?? 0)} — to correct the running
-              balance, use <strong className="font-semibold text-ink">Adjust balance</strong> from
-              the account menu.
-            </p>
+            <Field
+              label="Current balance (Rs)"
+              htmlFor="raqamora-account-edit-balance"
+              hint={`Opening was ${formatPKR(account?.openingBalance ?? 0)}. Changing this updates the current wallet balance.`}
+            >
+              <Input
+                id="raqamora-account-edit-balance"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                className="min-h-11 font-semibold"
+                value={currentBalance}
+                onChange={(e) => setCurrentBalance(e.target.value)}
+              />
+            </Field>
           )}
 
           <Field label="Color">

@@ -1330,6 +1330,36 @@ function PersonDetail({
   const [deleteDebt, setDeleteDebt] = React.useState<DebtWithOutstanding | null>(null);
   const [deletingDebt, setDeletingDebt] = React.useState(false);
   const [personEditOpen, setPersonEditOpen] = React.useState(false);
+  const [activityFilter, setActivityFilter] = React.useState<"all" | "this-month">("all");
+
+  const currentMonthKey = React.useMemo(() => {
+    return new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 7);
+  }, []);
+
+  const currentMonthLabel = React.useMemo(() => {
+    const [y, m] = currentMonthKey.split("-").map(Number);
+    return new Intl.DateTimeFormat("en-PK", { month: "long", year: "numeric", timeZone: "UTC" }).format(
+      new Date(Date.UTC(y, m - 1, 1)),
+    );
+  }, [currentMonthKey]);
+
+  const monthStats = React.useMemo(() => {
+    if (!txns) return { given: 0, received: 0, count: 0 };
+    let given = 0;
+    let received = 0;
+    let count = 0;
+    for (const t of txns) {
+      if (t.date.slice(0, 7) === currentMonthKey) {
+        count += 1;
+        if (t.type === "LENT" || t.type === "REPAYMENT_MADE") {
+          given += t.amount;
+        } else if (t.type === "REPAYMENT_RECEIVED" || t.type === "BORROWED") {
+          received += t.amount;
+        }
+      }
+    }
+    return { given, received, count };
+  }, [txns, currentMonthKey]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -1551,6 +1581,51 @@ function PersonDetail({
         <ToneStatCard label="Net position" value={net} tone="neutral" sub="Receivable minus payable" />
       </div>
 
+      {/* This Month's Movement Summary */}
+      <div className="rounded-2xl border border-hairline/80 bg-gradient-to-r from-card via-card to-muted/20 p-4 shadow-card">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline/60 pb-2.5">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+              {currentMonthLabel} Activity Summary
+            </h3>
+            <p className="text-[11px] text-ink-soft">
+              Complete money given to and received from {person.name} this month
+            </p>
+          </div>
+          <Badge variant="outline" className="text-[11px] font-semibold text-brand-emerald">
+            {monthStats.count} transaction{monthStats.count === 1 ? "" : "s"} in {currentMonthLabel}
+          </Badge>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-hairline/60 bg-card p-3">
+            <span className="text-[11px] font-medium text-ink-soft">Aapne diye (You gave them)</span>
+            <div className="mt-1">
+              <Money value={monthStats.given} size="md" className="font-bold text-money-neg" />
+            </div>
+            <span className="text-[10px] text-ink-soft">Lent or Repaid this month</span>
+          </div>
+          <div className="rounded-xl border border-hairline/60 bg-card p-3">
+            <span className="text-[11px] font-medium text-ink-soft">Unhon ne diye (They gave you)</span>
+            <div className="mt-1">
+              <Money value={monthStats.received} size="md" className="font-bold text-money-pos" />
+            </div>
+            <span className="text-[10px] text-ink-soft">Repaid or Borrowed this month</span>
+          </div>
+          <div className="col-span-2 rounded-xl border border-hairline/60 bg-card p-3 sm:col-span-1">
+            <span className="text-[11px] font-medium text-ink-soft">Net flow this month</span>
+            <div className="mt-1">
+              <Money
+                value={monthStats.given - monthStats.received}
+                colored
+                size="md"
+                className="font-bold"
+              />
+            </div>
+            <span className="text-[10px] text-ink-soft">Given minus received</span>
+          </div>
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="no-print flex flex-wrap items-center gap-2">
         <Button size="sm" className="min-h-9" onClick={() => setDebtDialogOpen(true)}>
@@ -1627,7 +1702,38 @@ function PersonDetail({
       </SectionCard>
 
       {/* Full activity history */}
-      <SectionCard title="Full activity" subtitle={`Every transaction with ${person.name}`}>
+      <SectionCard
+        title="Full activity"
+        subtitle={`Every transaction with ${person.name}`}
+        action={
+          <div className="flex items-center gap-1 rounded-xl border border-hairline bg-muted/50 p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setActivityFilter("all")}
+              className={cn(
+                "rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors",
+                activityFilter === "all"
+                  ? "bg-card text-ink shadow-2xs font-semibold"
+                  : "text-ink-soft hover:text-ink",
+              )}
+            >
+              All time ({txns?.length ?? 0})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActivityFilter("this-month")}
+              className={cn(
+                "rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors",
+                activityFilter === "this-month"
+                  ? "bg-card text-ink shadow-2xs font-semibold"
+                  : "text-ink-soft hover:text-ink",
+              )}
+            >
+              {currentMonthLabel} ({monthStats.count})
+            </button>
+          </div>
+        }
+      >
         {txnError ? (
           <EmptyState
             icon={AlertTriangle}
@@ -1644,9 +1750,15 @@ function PersonDetail({
             title="No transactions yet"
             description="Ledger entries and repayments with this person will appear here in order, newest first."
           />
+        ) : (activityFilter === "this-month" ? txns.filter((t) => t.date.slice(0, 7) === currentMonthKey) : txns).length === 0 ? (
+          <EmptyState
+            icon={ReceiptText}
+            title={`No activity in ${currentMonthLabel}`}
+            description={`No transactions were recorded with ${person.name} in this month.`}
+          />
         ) : (
           <ul className="rq-scroll max-h-96 divide-y divide-border overflow-y-auto pr-1">
-            {txns.map((t) => {
+            {(activityFilter === "this-month" ? txns.filter((t) => t.date.slice(0, 7) === currentMonthKey) : txns).map((t) => {
               const sign = txnFlowSign(t.type, t.signed);
               return (
                 <li key={t.id} className="flex items-center gap-2.5 py-2.5">

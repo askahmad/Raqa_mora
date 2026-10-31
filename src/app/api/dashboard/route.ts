@@ -333,7 +333,11 @@ export async function GET(req: NextRequest) {
       largestExpenses,
       frequentCategories,
       peopleWithBalances,
-      comparison: { income: prevSummary.income, expense: prevSummary.expense },
+      comparison: {
+        income: prevSummary.income,
+        expense: prevSummary.expense,
+        netSavings: prevSummary.income - prevSummary.netExpense,
+      },
     };
 
     return NextResponse.json(payload);

@@ -162,7 +162,7 @@ export interface DashboardData {
   largestExpenses: TxnRow[];
   frequentCategories: Array<{ name: string; icon: string; count: number; total: number }>;
   peopleWithBalances: Array<{ id: string; name: string; receivable: number; payable: number }>;
-  comparison: { income: number; expense: number } | null;
+  comparison: { income: number; expense: number; netSavings?: number } | null;
 }
 
 export interface SessionUser {
