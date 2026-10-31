@@ -401,8 +401,12 @@ export default function BudgetsView({ user }: ViewProps) {
                 <ChevronRight className="size-4" />
               </Button>
             </div>
-            <Button size="sm" onClick={() => openCreate()}>
-              <Plus className="size-4" aria-hidden />
+            <Button
+              size="sm"
+              className="min-h-9 rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white font-semibold shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 hover:brightness-105 active:scale-95 transition-all"
+              onClick={() => openCreate()}
+            >
+              <Plus className="size-4 mr-1.5" aria-hidden />
               Set budget
             </Button>
           </>

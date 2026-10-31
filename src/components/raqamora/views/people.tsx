@@ -382,7 +382,7 @@ export function DebtCard({
   const pct = debt.principal > 0 ? Math.min(100, Math.round((debt.repaid / debt.principal) * 100)) : 0;
 
   return (
-    <div className={cn("rounded-xl border border-hairline bg-card p-4 shadow-card", className)}>
+    <div className={cn("spotlight-card rounded-2xl border border-hairline/80 bg-card p-4 sm:p-5 shadow-card transition-all active:scale-[0.99]", className)}>
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
         {onOpenPerson ? (
           <button
@@ -1818,13 +1818,13 @@ export default function PeopleView(_props: ViewProps) {
         actions={
           <Button
             size="sm"
-            className="min-h-9"
+            className="min-h-9 rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white font-semibold shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 hover:brightness-105 active:scale-95 transition-all"
             onClick={() => {
               setEditPerson(null);
               setPersonDialogOpen(true);
             }}
           >
-            <Plus className="size-4" aria-hidden />
+            <Plus className="size-4 mr-1.5" aria-hidden />
             Add person
           </Button>
         }

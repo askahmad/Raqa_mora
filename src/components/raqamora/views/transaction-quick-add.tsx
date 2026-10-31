@@ -1168,7 +1168,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
       <div className="sticky bottom-0 inset-x-0 pt-2 pb-0.5 bg-gradient-to-t from-background via-background/95 to-transparent mt-1">
         <Button
           type="submit"
-          className="min-h-12 w-full text-[15px] font-bold rounded-2xl shadow-lg shadow-primary/25 active:scale-[0.98] transition-transform"
+          className="min-h-12 w-full text-[15px] font-bold rounded-2xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white shadow-lg shadow-emerald-600/30 hover:shadow-xl hover:shadow-emerald-600/40 hover:brightness-105 active:scale-[0.98] transition-all"
           disabled={submitting}
         >
           {submitting ? (

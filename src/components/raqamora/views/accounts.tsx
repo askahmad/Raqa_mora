@@ -223,16 +223,17 @@ export default function AccountsView(_props: ViewProps) {
         description="Cash, bank & mobile wallets"
         actions={
           <>
-            <Button variant="outline" onClick={() => setTransferOpen(true)} className="min-h-9">
-              <ArrowLeftRight className="size-4" aria-hidden /> Transfer
+            <Button variant="outline" onClick={() => setTransferOpen(true)} className="min-h-9 rounded-xl shadow-2xs hover:bg-muted/60 active:scale-95 transition-transform">
+              <ArrowLeftRight className="size-4 mr-1.5" aria-hidden /> Transfer
             </Button>
             <Button
               onClick={() => {
                 setEditing(null);
                 setFormOpen(true);
               }}
+              className="min-h-9 rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white font-semibold shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 hover:brightness-105 active:scale-95 transition-all"
             >
-              <Plus className="size-4" aria-hidden /> New account
+              <Plus className="size-4 mr-1.5" aria-hidden /> New account
             </Button>
           </>
         }
@@ -241,18 +242,22 @@ export default function AccountsView(_props: ViewProps) {
       {/* ------------------------------------------------ summary strip */}
       <section
         aria-label="Balance summary"
-        className="rounded-xl bg-navy p-5 text-ivory shadow-card sm:p-6"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b1320] via-[#111c2e] to-[#080d17] p-5 text-ivory shadow-raised border border-white/10 sm:p-6"
       >
-        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-ivory/60">
-          Total balance
-        </p>
-        <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
-          <Money value={totalBalance} size="xl" className="text-ivory" />
-          <p className="pb-1 text-xs text-ivory/60">
-            Across {activeAccounts.length} active{" "}
-            {activeAccounts.length === 1 ? "account" : "accounts"}
-            {archivedAccounts.length > 0 ? ` · ${archivedAccounts.length} archived` : ""}
+        <div className="pointer-events-none absolute -right-12 -top-12 size-36 rounded-full bg-brand-emerald/20 blur-2xl" />
+        <div className="pointer-events-none absolute -left-12 -bottom-12 size-36 rounded-full bg-gold/15 blur-2xl" />
+        <div className="relative z-10">
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ivory/60">
+            Total Consolidated Balance
           </p>
+          <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+            <Money value={totalBalance} size="xl" className="text-3xl sm:text-4xl font-extrabold text-white" />
+            <p className="pb-1 text-xs text-ivory/70 font-medium">
+              Across {activeAccounts.length} active{" "}
+              {activeAccounts.length === 1 ? "account" : "accounts"}
+              {archivedAccounts.length > 0 ? ` · ${archivedAccounts.length} archived` : ""}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -429,7 +434,7 @@ function AccountCard({
   onDelete: () => void;
 }) {
   return (
-    <article className={cn("rounded-xl border border-hairline bg-card p-4 shadow-card", muted && "opacity-70")}>
+    <article className={cn("spotlight-card rounded-2xl border border-hairline/80 bg-card p-4 sm:p-5 shadow-card transition-all active:scale-[0.99]", muted && "opacity-60")}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
           <span

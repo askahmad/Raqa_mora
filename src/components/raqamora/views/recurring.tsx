@@ -675,8 +675,12 @@ export default function RecurringView(_props: ViewProps) {
               {processing ? <Spinner className="size-4 text-current" /> : <PlayCircle className="size-4" aria-hidden />}
               Process due now{dueCount > 0 ? ` (${dueCount})` : ""}
             </Button>
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="size-4" aria-hidden />
+            <Button
+              size="sm"
+              className="min-h-9 rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white font-semibold shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 hover:brightness-105 active:scale-95 transition-all"
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="size-4 mr-1.5" aria-hidden />
               New rule
             </Button>
           </>

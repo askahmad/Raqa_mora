@@ -342,7 +342,7 @@ export function AppShell({
               <Button
                 onClick={onQuickAdd}
                 size="sm"
-                className="hidden sm:inline-flex h-9 rounded-xl bg-brand-emerald text-white font-semibold shadow-xs hover:bg-brand-emerald-deep active:scale-95 transition-transform"
+                className="hidden sm:inline-flex h-9.5 rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white font-semibold shadow-md shadow-emerald-600/25 hover:shadow-lg hover:shadow-emerald-600/35 hover:brightness-105 active:scale-95 transition-all"
               >
                 <Plus className="size-4 mr-1" aria-hidden />
                 {t.quickAdd}
@@ -417,15 +417,15 @@ export function AppShell({
             onClick={() => go("transactions")}
           />
 
-          {/* Elevated Center FAB */}
+          {/* Elevated Center FAB with Material 3 & Aceternity radial glow */}
           <div className="relative -mt-6 flex items-start justify-center">
             <button
               type="button"
               onClick={onQuickAdd}
               aria-label="Quick add transaction"
-              className="flex size-12 sm:size-13 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-emerald-deep to-brand-emerald text-white shadow-[0_8px_20px_-3px_rgba(22,131,111,0.5)] ring-4 ring-card active:scale-90 transition-transform duration-150 focus-visible:outline-none"
+              className="group flex size-12.5 sm:size-13 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-emerald-deep via-brand-emerald to-emerald-400 text-white shadow-[0_10px_25px_-3px_rgba(5,150,105,0.45)] ring-4 ring-card active:scale-90 transition-all duration-200 focus-visible:outline-none"
             >
-              <Plus className="size-5.5 transition-transform" aria-hidden />
+              <Plus className="size-6 transition-transform duration-200 group-hover:rotate-90 group-active:scale-90" aria-hidden />
             </button>
           </div>
 

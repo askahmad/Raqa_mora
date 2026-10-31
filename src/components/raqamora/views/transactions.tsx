@@ -339,6 +339,24 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
   const expenseCategories = base.categories.filter((c) => c.kind === "EXPENSE");
   const incomeCategories = base.categories.filter((c) => c.kind === "INCOME");
 
+  const summaryStats = React.useMemo(() => {
+    let inflow = 0;
+    let outflow = 0;
+    for (const t of txns) {
+      if (t.type === "INCOME" || t.type === "BORROWED" || t.type === "REPAYMENT_RECEIVED" || t.type === "REFUND") {
+        inflow += t.amount;
+      } else if (t.type === "EXPENSE" || t.type === "LENT" || t.type === "REPAYMENT_MADE") {
+        outflow += t.amount;
+      }
+    }
+    return {
+      inflow,
+      outflow,
+      net: inflow - outflow,
+      count: total,
+    };
+  }, [txns, total]);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -346,15 +364,40 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
         description="Every rupee in and out"
         actions={
           <>
-            <Button variant="outline" onClick={exportCsv} className="min-h-9">
-              <Download className="size-4" aria-hidden /> Export CSV
+            <Button variant="outline" onClick={exportCsv} className="min-h-9 rounded-xl shadow-2xs hover:bg-muted/60 active:scale-95 transition-transform">
+              <Download className="size-4 mr-1.5" aria-hidden /> Export CSV
             </Button>
-            <Button onClick={() => setQuickAddOpen(true)}>
-              <Plus className="size-4" aria-hidden /> Add transaction
+            <Button
+              onClick={() => setQuickAddOpen(true)}
+              className="min-h-9 rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white font-semibold shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 hover:brightness-105 active:scale-95 transition-all"
+            >
+              <Plus className="size-4 mr-1.5" aria-hidden /> Add transaction
             </Button>
           </>
         }
       />
+
+      {/* Ant Design & Mantine style financial summary metrics bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="spotlight-card rounded-2xl border border-hairline/80 bg-card p-3 sm:p-4 shadow-card">
+          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink-soft">Total Entries</p>
+          <p className="mt-1 text-base sm:text-xl font-extrabold text-ink">{total} {total === 1 ? "txn" : "txns"}</p>
+        </div>
+        <div className="spotlight-card rounded-2xl border border-hairline/80 bg-card p-3 sm:p-4 shadow-card">
+          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink-soft">Page Inflow</p>
+          <p className="mt-1 text-base sm:text-xl font-extrabold text-brand-emerald">+{formatPKR(summaryStats.inflow)}</p>
+        </div>
+        <div className="spotlight-card rounded-2xl border border-hairline/80 bg-card p-3 sm:p-4 shadow-card">
+          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink-soft">Page Outflow</p>
+          <p className="mt-1 text-base sm:text-xl font-extrabold text-danger-brand">−{formatPKR(summaryStats.outflow)}</p>
+        </div>
+        <div className="spotlight-card rounded-2xl border border-hairline/80 bg-card p-3 sm:p-4 shadow-card">
+          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink-soft">Net Cash Flow</p>
+          <p className={cn("mt-1 text-base sm:text-xl font-extrabold", summaryStats.net >= 0 ? "text-brand-emerald" : "text-danger-brand")}>
+            {summaryStats.net >= 0 ? "+" : "−"}{formatPKR(Math.abs(summaryStats.net))}
+          </p>
+        </div>
+      </div>
 
       {/* ------------------------------------------------- filter bar */}
       <SectionCard contentClassName="p-3 sm:p-4">

@@ -709,7 +709,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
               <div className="mt-4 flex items-center gap-2 pt-3 border-t border-white/10">
                 <Button
                   size="sm"
-                  className="h-8 flex-1 rounded-xl bg-brand-emerald text-white text-xs font-bold shadow-xs hover:bg-brand-emerald-deep active:scale-95 transition-transform"
+                  className="h-8.5 flex-1 rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white text-xs font-bold shadow-md shadow-emerald-600/30 hover:brightness-105 active:scale-95 transition-all"
                   onClick={() => window.dispatchEvent(new Event("raqamora:quick-add"))}
                 >
                   <Plus className="size-3.5 mr-1" aria-hidden />
