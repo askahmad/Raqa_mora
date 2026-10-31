@@ -82,6 +82,9 @@ export const metadata: Metadata = {
     images: ["/icon-512.png"],
     creator: "@raqamora",
   },
+  verification: {
+    google: "google6ea23c10c93f9b0b",
+  },
   other: {
     // GEO Targeting for Pakistan & Major Economic Hubs
     "geo.region": "PK",
@@ -113,6 +116,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="google-site-verification" content="google6ea23c10c93f9b0b" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Comprehensive SEO, AEO & GEO Schema Graph */}
