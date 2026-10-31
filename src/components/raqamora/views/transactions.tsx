@@ -668,9 +668,9 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
       <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-base">Add transaction</DialogTitle>
+            <DialogTitle className="text-base">Nayi Entry</DialogTitle>
             <DialogDescription>
-              Log income, expenses, transfers or person-wise ledger entries in seconds.
+              Kharcha, aamdani ya khata jaldi se record karein.
             </DialogDescription>
           </DialogHeader>
           <TransactionQuickAdd

@@ -223,9 +223,9 @@ export function AppRoot() {
       <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Quick add</DialogTitle>
+            <DialogTitle>Quick Entry</DialogTitle>
             <DialogDescription>
-              Log income, expenses, transfers or person-wise ledger entries in seconds.
+              Kharcha, aamdani ya khata jaldi se record karein.
             </DialogDescription>
           </DialogHeader>
           <TransactionQuickAdd

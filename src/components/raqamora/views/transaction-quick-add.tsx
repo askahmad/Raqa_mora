@@ -1,16 +1,10 @@
 "use client";
 
 /**
- * RAQAMORA transaction quick-add — the flagship capture form.
+ * RAQAMORA transaction quick-add — fast, frictionless & beginner-friendly capture.
  *
- * One type-driven form for all nine transaction kinds. Money is entered in
- * rupees and sent to the API as `amountRupees` numbers (the API edge converts
- * to integer paisa). Flows:
- * - INCOME / EXPENSE / REFUND / TRANSFER / ADJUSTMENT → POST /api/transactions
- * - LENT / BORROWED + "ledger entry" checkbox → POST /api/debts (recordNow: true)
- *   which atomically creates the Debt AND the linked LENT/BORROWED transaction.
- * - REPAYMENT_RECEIVED / REPAYMENT_MADE → POST /api/transactions with debtId,
- *   capped client-side at the selected debt's outstanding amount.
+ * Designed with simple everyday language (Kharcha, Aamdani, Transfer, Khata)
+ * and smart defaults so users can log an entry in under 3 seconds.
  */
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +16,7 @@ import {
   ArrowLeftRight,
   ArrowUpRight,
   Check,
+  ChevronDown,
   HandCoins,
   Handshake,
   RotateCcw,
@@ -89,10 +84,6 @@ function karachiDateNoonIso(value: string): string {
 
 /* ---------------------------------------------------------- shared helpers */
 
-/**
- * Stable 401 guard — safe to call from effects/handlers without re-triggering
- * them when the app context identity changes. Returns true when handled.
- */
 export function useUnauthorizedGuard(): (err: unknown) => boolean {
   const { handleUnauthorized } = useApp();
   const ref = React.useRef(handleUnauthorized);
@@ -108,7 +99,6 @@ export function useUnauthorizedGuard(): (err: unknown) => boolean {
   }, []);
 }
 
-/** Labeled field shell with hint + inline error used across RAQAMORA forms. */
 export function Field({
   label,
   htmlFor,
@@ -124,7 +114,7 @@ export function Field({
 }) {
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor={htmlFor} className="text-[13px] font-medium text-ink">
+      <Label htmlFor={htmlFor} className="text-[12.5px] font-semibold text-ink">
         {label}
       </Label>
       {children}
@@ -138,20 +128,6 @@ export function Field({
   );
 }
 
-/* ----------------------------------------------------------------- config */
-
-const TYPE_GRID: Array<{ type: TxnType; icon: LucideIcon }> = [
-  { type: "INCOME", icon: TrendingUp },
-  { type: "EXPENSE", icon: TrendingDown },
-  { type: "TRANSFER", icon: ArrowLeftRight },
-  { type: "LENT", icon: HandCoins },
-  { type: "BORROWED", icon: Handshake },
-  { type: "REPAYMENT_RECEIVED", icon: ArrowDownLeft },
-  { type: "REPAYMENT_MADE", icon: ArrowUpRight },
-  { type: "REFUND", icon: RotateCcw },
-  { type: "ADJUSTMENT", icon: SlidersHorizontal },
-];
-
 function isRepayment(t: TxnType): boolean {
   return t === "REPAYMENT_RECEIVED" || t === "REPAYMENT_MADE";
 }
@@ -160,33 +136,15 @@ function isLentBorrowed(t: TxnType): boolean {
   return t === "LENT" || t === "BORROWED";
 }
 
-function accountLabelFor(t: TxnType): string {
-  switch (t) {
-    case "INCOME":
-    case "BORROWED":
-    case "REPAYMENT_RECEIVED":
-    case "REFUND":
-      return "Received in";
-    case "EXPENSE":
-    case "LENT":
-    case "REPAYMENT_MADE":
-      return "Paid from";
-    default:
-      return "Account";
-  }
-}
-
 /* ------------------------------------------------------------ props/types */
 
 export type TransactionQuickAddProps = {
   onSaved: () => void;
-  /** Preselected type — defaults to EXPENSE. */
   defaultType?: TxnType;
 };
 
 /* -------------------------------------------------------- AddPersonInline */
 
-/** Inline "add person" mini-form used beside the person select. */
 function AddPersonInline({ onAdded }: { onAdded: (person: PersonRow) => void }) {
   const guard = useUnauthorizedGuard();
   const [open, setOpen] = React.useState(false);
@@ -199,13 +157,13 @@ function AddPersonInline({ onAdded }: { onAdded: (person: PersonRow) => void }) 
     setSaving(true);
     try {
       const { person } = await apiSend<{ person: PersonRow }>("/api/people", "POST", { name: trimmed });
-      toast.success(`${person.name} added to your people`);
+      toast.success(`${person.name} add ho gaye`);
       onAdded(person);
       setOpen(false);
       setName("");
     } catch (err) {
       if (!guard(err)) {
-        toast.error(err instanceof Error ? err.message : "Could not add the person");
+        toast.error(err instanceof Error ? err.message : "Banda add nahi ho saka");
       }
     } finally {
       setSaving(false);
@@ -218,35 +176,36 @@ function AddPersonInline({ onAdded }: { onAdded: (person: PersonRow) => void }) 
         <Button
           type="button"
           variant="outline"
-          className="min-h-11 shrink-0 gap-1.5 px-3 text-xs"
-          title="Add a new person"
+          className="h-10 shrink-0 gap-1.5 px-3 text-xs"
+          title="Naya banda add karein"
         >
-          <UserPlus className="size-4" aria-hidden />
-          <span>New</span>
+          <UserPlus className="size-3.5" aria-hidden />
+          <span>+ Naya</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-60 p-3">
+      <PopoverContent align="end" className="w-64 p-3">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             void submit();
           }}
-          className="space-y-2"
+          className="space-y-2.5"
         >
-          <Label htmlFor="raqamora-new-person" className="text-xs font-medium text-ink">
-            New person
+          <Label htmlFor="raqamora-new-person" className="text-xs font-semibold text-ink">
+            Naya Banda (Person)
           </Label>
           <Input
             id="raqamora-new-person"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Ahmed Raza"
+            placeholder="Naam likhein (e.g. Ali Khan)"
             maxLength={80}
             autoFocus
+            className="h-9 text-xs"
           />
-          <Button type="submit" size="sm" className="w-full" disabled={!name.trim() || saving}>
-            {saving ? <Spinner className="size-4 text-current" /> : null}
-            Add person
+          <Button type="submit" size="sm" className="w-full h-8 text-xs font-medium" disabled={!name.trim() || saving}>
+            {saving ? <Spinner className="size-3.5 text-current mr-1.5" /> : null}
+            Add Karein
           </Button>
         </form>
       </PopoverContent>
@@ -254,7 +213,7 @@ function AddPersonInline({ onAdded }: { onAdded: (person: PersonRow) => void }) 
   );
 }
 
-/* ------------------------------------------------------- AccountSelect bit */
+/* ------------------------------------------------------- AccountSelect */
 
 function AccountSelect({
   accounts,
@@ -271,19 +230,24 @@ function AccountSelect({
 }) {
   return (
     <Select value={value ?? ""} onValueChange={onChange}>
-      <SelectTrigger className="min-h-11 w-full" aria-label={placeholder}>
+      <SelectTrigger className="h-10 w-full text-xs sm:text-sm" aria-label={placeholder}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent className="max-h-64">
         {accounts.map((a) => (
           <SelectItem key={a.id} value={a.id} disabled={excludeId === a.id}>
-            <span className="flex min-w-0 items-center gap-2">
-              <span
-                className="size-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: a.color }}
-                aria-hidden
-              />
-              <span className="truncate">{a.name}</span>
+            <span className="flex min-w-0 items-center justify-between gap-3 w-full">
+              <span className="flex items-center gap-2 truncate">
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: a.color }}
+                  aria-hidden
+                />
+                <span className="truncate">{a.name}</span>
+              </span>
+              <span className="text-[11px] text-ink-soft shrink-0 font-mono">
+                {formatPKR(a.balance)}
+              </span>
             </span>
           </SelectItem>
         ))}
@@ -292,41 +256,26 @@ function AccountSelect({
   );
 }
 
-/* ------------------------------------------------------------ the form */
+/* ------------------------------------------------------------ Main Form */
+
+type TopTab = "EXPENSE" | "INCOME" | "TRANSFER" | "KHATA" | "MORE";
+
+function getTopTab(t: TxnType): TopTab {
+  if (t === "EXPENSE") return "EXPENSE";
+  if (t === "INCOME") return "INCOME";
+  if (t === "TRANSFER") return "TRANSFER";
+  if (t === "LENT" || t === "BORROWED" || t === "REPAYMENT_RECEIVED" || t === "REPAYMENT_MADE") return "KHATA";
+  return "MORE";
+}
 
 export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }: TransactionQuickAddProps) {
   const guard = useUnauthorizedGuard();
 
-  /* ---- base reference data, fetched once on open ---- */
   const [accounts, setAccounts] = React.useState<AccountWithBalance[]>([]);
   const [categories, setCategories] = React.useState<CategoryRow[]>([]);
   const [people, setPeople] = React.useState<PersonRow[]>([]);
   const [loadState, setLoadState] = React.useState<"loading" | "ready" | "error">("loading");
 
-  const loadBase = React.useCallback(() => {
-    setLoadState("loading");
-    Promise.all([
-      apiGet<{ accounts: AccountWithBalance[] }>("/api/accounts"),
-      apiGet<{ categories: CategoryRow[] }>("/api/categories"),
-      apiGet<{ people: PersonRow[] }>("/api/people"),
-    ])
-      .then(([a, c, p]) => {
-        setAccounts(a.accounts.filter((acc) => !acc.archived));
-        setCategories(c.categories.filter((cat) => !cat.archived));
-        setPeople(p.people);
-        setLoadState("ready");
-      })
-      .catch((err) => {
-        if (guard(err)) return;
-        setLoadState("error");
-      });
-  }, [guard]);
-
-  React.useEffect(() => {
-    loadBase();
-  }, [loadBase]);
-
-  /* ---- form ---- */
   type FormInput = z.input<typeof transactionSchema>;
   type FormOutput = z.output<typeof transactionSchema>;
 
@@ -346,26 +295,64 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
       adjustDirection: undefined,
     },
   });
-  const { setValue, getValues } = form;
+
+  const { setValue, getValues, watch } = form;
   const errors = form.formState.errors;
 
-  const type = form.watch("type");
+  const type = watch("type");
   const req = txnFieldRequirements(type);
-  const watchedPersonId = form.watch("personId");
-  const watchedDebtId = form.watch("debtId");
-  const watchedAccountId = form.watch("accountId");
-  const watchedToAccountId = form.watch("toAccountId");
-  const watchedCategoryId = form.watch("categoryId");
-  const adjustDirection = form.watch("adjustDirection");
+  const watchedPersonId = watch("personId");
+  const watchedDebtId = watch("debtId");
+  const watchedAccountId = watch("accountId");
+  const watchedToAccountId = watch("toAccountId");
+  const watchedCategoryId = watch("categoryId");
+  const adjustDirection = watch("adjustDirection");
+  const watchedAmount = watch("amountRupees");
 
-  /* ---- ledger checkbox + due date (LENT/BORROWED only) ---- */
   const [createLedger, setCreateLedger] = React.useState(true);
   const [dueDate, setDueDate] = React.useState("");
 
-  /* ---- active debts for repayments ---- */
   const [debts, setDebts] = React.useState<DebtWithOutstanding[]>([]);
   const [debtsLoading, setDebtsLoading] = React.useState(false);
   const debtReqRef = React.useRef(0);
+
+  const loadBase = React.useCallback(() => {
+    setLoadState("loading");
+    Promise.all([
+      apiGet<{ accounts: AccountWithBalance[] }>("/api/accounts"),
+      apiGet<{ categories: CategoryRow[] }>("/api/categories"),
+      apiGet<{ people: PersonRow[] }>("/api/people"),
+    ])
+      .then(([a, c, p]) => {
+        const activeAccounts = a.accounts.filter((acc) => !acc.archived);
+        const activeCategories = c.categories.filter((cat) => !cat.archived);
+        setAccounts(activeAccounts);
+        setCategories(activeCategories);
+        setPeople(p.people);
+
+        // Smart default 1: Auto-select primary/first account
+        if (!getValues("accountId") && activeAccounts.length > 0) {
+          setValue("accountId", activeAccounts[0].id);
+        }
+
+        // Smart default 2: Auto-select first matching category
+        const initialKind = defaultType === "INCOME" ? "INCOME" : "EXPENSE";
+        const firstCat = activeCategories.find((cat) => cat.kind === initialKind);
+        if (!getValues("categoryId") && firstCat) {
+          setValue("categoryId", firstCat.id);
+        }
+
+        setLoadState("ready");
+      })
+      .catch((err) => {
+        if (guard(err)) return;
+        setLoadState("error");
+      });
+  }, [guard, defaultType, getValues, setValue]);
+
+  React.useEffect(() => {
+    loadBase();
+  }, [loadBase]);
 
   const loadDebts = React.useCallback(
     (personId: string, direction: "RECEIVABLE" | "PAYABLE") => {
@@ -380,7 +367,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
         })
         .catch((err) => {
           if (debtReqRef.current !== requestId) return;
-          if (!guard(err)) toast.error("Could not load active debts for this person");
+          if (!guard(err)) toast.error("Active debts load nahi ho sake");
         })
         .finally(() => {
           if (debtReqRef.current === requestId) setDebtsLoading(false);
@@ -393,17 +380,33 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
     if (next === type) return;
     const nextReq = txnFieldRequirements(next);
     setValue("type", next);
-    if (!nextReq.needsToAccount) setValue("toAccountId", null);
+
+    if (!nextReq.needsToAccount) {
+      setValue("toAccountId", null);
+    } else {
+      // Smart default for transfer: pick a different account
+      const currentFrom = getValues("accountId");
+      const other = accounts.find((a) => a.id !== currentFrom);
+      if (other && !getValues("toAccountId")) {
+        setValue("toAccountId", other.id);
+      }
+    }
+
     if (!nextReq.needsPerson) setValue("personId", null);
     setValue("debtId", null);
     setDebts([]);
+
     if (!nextReq.needsCategory) {
       setValue("categoryId", null);
     } else {
       const current = categories.find((c) => c.id === getValues("categoryId"));
       const wantKind = next === "INCOME" ? "INCOME" : "EXPENSE";
-      if (!current || current.kind !== wantKind) setValue("categoryId", null);
+      if (!current || current.kind !== wantKind) {
+        const firstMatch = categories.find((c) => c.kind === wantKind);
+        setValue("categoryId", firstMatch ? firstMatch.id : null);
+      }
     }
+
     if (!nextReq.needsReason) setValue("reason", null);
     if (next === "ADJUSTMENT") {
       if (getValues("adjustDirection") !== "DECREASE") setValue("adjustDirection", "INCREASE");
@@ -411,6 +414,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
       setValue("adjustDirection", undefined);
     }
     form.clearErrors();
+
     if (isRepayment(next)) {
       const personId = getValues("personId");
       if (personId) {
@@ -435,8 +439,6 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
   function handleDebtChange(id: string) {
     setValue("debtId", id, { shouldValidate: true });
     const debt = debts.find((d) => d.id === id);
-    // Auto-fill the max repayable ONLY when the user hasn't entered an amount
-    // yet — never overwrite a value they typed.
     const current = form.getValues("amountRupees");
     if (debt && (current === undefined || current === null || Number.isNaN(current) || current === 0)) {
       setValue("amountRupees", debt.outstanding / 100, { shouldValidate: true });
@@ -448,6 +450,12 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
     setValue("amountRupees", selectedDebt.outstanding / 100, { shouldValidate: true });
   }
 
+  function addQuickAmount(delta: number) {
+    const curr = form.getValues("amountRupees");
+    const base = Number.isNaN(curr) || !curr ? 0 : curr;
+    setValue("amountRupees", base + delta, { shouldValidate: true });
+  }
+
   /* ---- submit ---- */
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -457,12 +465,12 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
 
     if (isRepayment(t)) {
       if (!values.debtId) {
-        form.setError("debtId", { message: "Select the debt this repayment is against" });
+        form.setError("debtId", { message: "Konsa udhar wapis mila/diya hai, select karein" });
         return;
       }
       if (selectedDebt && paisa > selectedDebt.outstanding) {
         form.setError("amountRupees", {
-          message: `Cannot exceed outstanding Rs ${formatRupees(selectedDebt.outstanding)}`,
+          message: `Baqaya raqam Rs ${formatRupees(selectedDebt.outstanding)} se ziada nahi ho sakti`,
         });
         return;
       }
@@ -471,7 +479,6 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
     setSubmitting(true);
     try {
       if (isLentBorrowed(t) && createLedger) {
-        // One atomic call creates the Debt + the LENT/BORROWED transaction.
         await apiSend("/api/debts", "POST", {
           personId: values.personId ?? "",
           direction: t === "LENT" ? "RECEIVABLE" : "PAYABLE",
@@ -483,8 +490,8 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
         });
         toast.success(
           t === "LENT"
-            ? `Lent ${formatPKR(paisa)} — ledger entry created`
-            : `Borrowed ${formatPKR(paisa)} — ledger entry created`,
+            ? `${formatPKR(paisa)} diye — Khata record ho gaya`
+            : `${formatPKR(paisa)} liye — Khata record ho gaya`,
         );
       } else {
         await apiSend("/api/transactions", "POST", {
@@ -500,27 +507,32 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
           reason: t === "ADJUSTMENT" ? (values.reason?.trim() || null) : null,
           adjustDirection: t === "ADJUSTMENT" ? values.adjustDirection : undefined,
         });
-        toast.success(`${TXN_TYPE_LABELS[t]} of ${formatPKR(paisa)} saved`);
+        toast.success(
+          t === "EXPENSE"
+            ? `Kharcha ${formatPKR(paisa)} save ho gaya`
+            : t === "INCOME"
+              ? `Aamdani ${formatPKR(paisa)} save ho gayi`
+              : `${TXN_TYPE_LABELS[t]} (${formatPKR(paisa)}) save ho gaya`,
+        );
       }
       onSaved();
     } catch (err) {
       if (guard(err)) return;
-      toast.error(err instanceof Error ? err.message : "Could not save the transaction");
+      toast.error(err instanceof Error ? err.message : "Save nahi ho saka, dobara koshish karein");
     } finally {
       setSubmitting(false);
     }
   });
 
-  /* ---- loading / error / empty shells ---- */
   if (loadState === "loading") {
     return <SkeletonList rows={4} />;
   }
   if (loadState === "error") {
     return (
       <EmptyState
-        title="Couldn't load your accounts & categories"
-        description="Check your connection and try again."
-        actionLabel="Retry"
+        title="Accounts aur Categories load nahi huye"
+        description="Apna internet connection check karein."
+        actionLabel="Dobara Koshish Karein"
         onAction={() => loadBase()}
       />
     );
@@ -529,97 +541,370 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
     return (
       <EmptyState
         icon={Wallet}
-        title="No accounts yet"
-        description="Every transaction is recorded against an account. Create your first account from the Accounts page, then come back here."
+        title="Koi Account nahi mila"
+        description="Entry karne ke liye pehle Accounts page par ja kar ek account (e.g. Cash ya Bank) banayein."
       />
     );
   }
 
+  const topTab = getTopTab(type);
   const categoryKind = type === "INCOME" ? "INCOME" : "EXPENSE";
   const kindCategories = categories.filter((c) => c.kind === categoryKind);
+  const visibleChips = kindCategories.slice(0, 5);
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-4">
-      {/* ---------------------------------------------------- type grid */}
-      <div>
-        <Label className="text-[13px] font-medium text-ink">Type</Label>
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Transaction type">
-          {TYPE_GRID.map(({ type: t, icon: Icon }) => {
-            const active = t === type;
-            return (
+    <form onSubmit={onSubmit} noValidate className="space-y-3.5">
+      {/* ------------------------------------------------ Top Primary Tabs */}
+      <div className="space-y-2">
+        <div className="grid grid-cols-4 gap-1 rounded-xl bg-muted/60 p-1 border border-hairline">
+          <button
+            type="button"
+            onClick={() => selectType("EXPENSE")}
+            className={cn(
+              "flex flex-col sm:flex-row items-center justify-center gap-1 rounded-lg py-2 px-1 text-xs font-semibold transition-all",
+              topTab === "EXPENSE"
+                ? "bg-card text-danger-brand shadow-xs ring-1 ring-hairline"
+                : "text-ink-soft hover:text-ink hover:bg-card/50",
+            )}
+          >
+            <TrendingDown className="size-3.5" />
+            <span>Kharcha</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => selectType("INCOME")}
+            className={cn(
+              "flex flex-col sm:flex-row items-center justify-center gap-1 rounded-lg py-2 px-1 text-xs font-semibold transition-all",
+              topTab === "INCOME"
+                ? "bg-card text-brand-emerald-deep dark:text-[#53c6ac] shadow-xs ring-1 ring-hairline"
+                : "text-ink-soft hover:text-ink hover:bg-card/50",
+            )}
+          >
+            <TrendingUp className="size-3.5" />
+            <span>Aamdani</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => selectType("TRANSFER")}
+            className={cn(
+              "flex flex-col sm:flex-row items-center justify-center gap-1 rounded-lg py-2 px-1 text-xs font-semibold transition-all",
+              topTab === "TRANSFER"
+                ? "bg-card text-ink shadow-xs ring-1 ring-hairline"
+                : "text-ink-soft hover:text-ink hover:bg-card/50",
+            )}
+          >
+            <ArrowLeftRight className="size-3.5" />
+            <span>Transfer</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => selectType("LENT")}
+            className={cn(
+              "flex flex-col sm:flex-row items-center justify-center gap-1 rounded-lg py-2 px-1 text-xs font-semibold transition-all",
+              topTab === "KHATA"
+                ? "bg-card text-brand-emerald-deep dark:text-[#53c6ac] shadow-xs ring-1 ring-hairline"
+                : "text-ink-soft hover:text-ink hover:bg-card/50",
+            )}
+          >
+            <HandCoins className="size-3.5" />
+            <span>Khata</span>
+          </button>
+        </div>
+
+        {/* Khata Sub-modes */}
+        {topTab === "KHATA" && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-muted/30 rounded-lg border border-hairline">
+            <button
+              type="button"
+              onClick={() => selectType("LENT")}
+              className={cn(
+                "rounded-md py-1.5 px-2 text-[11px] font-medium transition-all text-center",
+                type === "LENT"
+                  ? "bg-card text-ink font-semibold shadow-xs border border-hairline"
+                  : "text-ink-soft hover:text-ink",
+              )}
+            >
+              Mene Diye (Lena hai)
+            </button>
+            <button
+              type="button"
+              onClick={() => selectType("BORROWED")}
+              className={cn(
+                "rounded-md py-1.5 px-2 text-[11px] font-medium transition-all text-center",
+                type === "BORROWED"
+                  ? "bg-card text-ink font-semibold shadow-xs border border-hairline"
+                  : "text-ink-soft hover:text-ink",
+              )}
+            >
+              Mene Liye (Dena hai)
+            </button>
+            <button
+              type="button"
+              onClick={() => selectType("REPAYMENT_RECEIVED")}
+              className={cn(
+                "rounded-md py-1.5 px-2 text-[11px] font-medium transition-all text-center",
+                type === "REPAYMENT_RECEIVED"
+                  ? "bg-card text-brand-emerald-deep font-semibold shadow-xs border border-hairline dark:text-[#53c6ac]"
+                  : "text-ink-soft hover:text-ink",
+              )}
+            >
+              Wapsi Mili
+            </button>
+            <button
+              type="button"
+              onClick={() => selectType("REPAYMENT_MADE")}
+              className={cn(
+                "rounded-md py-1.5 px-2 text-[11px] font-medium transition-all text-center",
+                type === "REPAYMENT_MADE"
+                  ? "bg-card text-danger-brand font-semibold shadow-xs border border-hairline"
+                  : "text-ink-soft hover:text-ink",
+              )}
+            >
+              Wapsi Di
+            </button>
+          </div>
+        )}
+
+        {/* More Options Link */}
+        <div className="flex justify-end">
+          <Popover>
+            <PopoverTrigger asChild>
               <button
-                key={t}
                 type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => selectType(t)}
+                className="text-[11px] text-ink-soft hover:text-ink flex items-center gap-1 font-medium transition-colors"
+              >
+                <span>Mazeed Options (Refund / Adjustment)</span>
+                <ChevronDown className="size-3" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-1.5 space-y-1">
+              <button
+                type="button"
+                onClick={() => selectType("REFUND")}
                 className={cn(
-                  "flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-lg border px-1 py-1.5 text-[10px] font-medium leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  active
-                    ? "border-brand-emerald bg-brand-emerald/10 text-brand-emerald-deep ring-2 ring-brand-emerald/50 dark:text-[#53c6ac]"
-                    : "border-hairline bg-card text-ink-soft hover:border-brand-emerald/50 hover:text-ink",
+                  "w-full flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-left transition-colors",
+                  type === "REFUND" ? "bg-muted font-semibold text-ink" : "text-ink-soft hover:bg-muted/60 hover:text-ink",
                 )}
               >
-                <Icon className="size-4" aria-hidden />
-                {TXN_TYPE_LABELS[t]}
+                <RotateCcw className="size-3.5" />
+                <span>Refund (Wapsi raqam)</span>
               </button>
-            );
-          })}
+              <button
+                type="button"
+                onClick={() => selectType("ADJUSTMENT")}
+                className={cn(
+                  "w-full flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-left transition-colors",
+                  type === "ADJUSTMENT" ? "bg-muted font-semibold text-ink" : "text-ink-soft hover:bg-muted/60 hover:text-ink",
+                )}
+              >
+                <SlidersHorizontal className="size-3.5" />
+                <span>Balance Adjustment</span>
+              </button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
-      {/* ------------------------------------------------ amount + date */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Amount" error={errors.amountRupees?.message}>
-          <div className="relative">
-            <span
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-ink-soft"
-              aria-hidden
-            >
-              Rs
-            </span>
-            <Input
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0.01"
-              placeholder="0.00"
-              autoFocus
-              aria-invalid={Boolean(errors.amountRupees)}
-              className="min-h-11 pl-10 pr-14 text-[15px] font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              {...form.register("amountRupees", { valueAsNumber: true })}
-            />
-            {isRepayment(type) && selectedDebt ? (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={fillMax}
-                className="absolute right-1.5 top-1/2 h-7 -translate-y-1/2 px-2 text-[11px] font-semibold"
-              >
-                Max
-              </Button>
-            ) : null}
-          </div>
-        </Field>
-        <Field label="Date & time" htmlFor="raqamora-txn-date" error={errors.date?.message}>
+      {/* ------------------------------------------------ Hero Amount Input */}
+      <div className="rounded-2xl border border-hairline bg-card/70 p-3 sm:p-4 text-center">
+        <span className="text-[11px] font-semibold tracking-wide uppercase text-ink-soft">
+          {type === "INCOME"
+            ? "Aamdani Raqam"
+            : type === "TRANSFER"
+              ? "Transfer Raqam"
+              : isLentBorrowed(type)
+                ? "Khata Raqam"
+                : "Kharcha Raqam"}
+        </span>
+        <div className="relative mt-1 flex items-center justify-center">
+          <span className="text-xl sm:text-2xl font-bold text-ink-soft mr-2" aria-hidden>
+            Rs
+          </span>
           <Input
-            id="raqamora-txn-date"
-            type="datetime-local"
-            className="min-h-11"
-            {...form.register("date")}
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0.01"
+            placeholder="0"
+            autoFocus
+            aria-label="Amount in rupees"
+            className="h-12 w-full max-w-[280px] border-none bg-transparent text-center text-3xl sm:text-4xl font-extrabold tracking-tight text-ink focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            {...form.register("amountRupees", { valueAsNumber: true })}
           />
-        </Field>
+          {isRepayment(type) && selectedDebt ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={fillMax}
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-7 px-2 text-[11px] font-semibold"
+            >
+              Full Baqaya
+            </Button>
+          ) : null}
+        </div>
+
+        {errors.amountRupees && (
+          <p className="mt-1 text-xs font-medium text-danger-brand" role="alert">
+            {errors.amountRupees.message}
+          </p>
+        )}
+
+        {/* Quick Amount Booster Chips */}
+        <div className="mt-2.5 flex items-center justify-center gap-1.5 flex-wrap">
+          {[100, 500, 1000, 5000].map((val) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => addQuickAmount(val)}
+              className="rounded-full border border-hairline bg-muted/60 px-2.5 py-1 text-[11px] font-medium text-ink-soft hover:bg-muted hover:text-ink active:scale-95 transition-all"
+            >
+              +{formatRupees(val * 100)}
+            </button>
+          ))}
+          {watchedAmount > 0 && (
+            <button
+              type="button"
+              onClick={() => setValue("amountRupees", Number.NaN)}
+              className="rounded-full border border-hairline px-2 py-1 text-[11px] text-ink-soft hover:text-danger-brand transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* ------------------------------------------------------- person */}
-      {req.needsPerson ? (
+      {/* ------------------------------------------------ Category Chips */}
+      {req.needsCategory && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold text-ink">
+              Category {type === "INCOME" ? "(Kahan se aayi?)" : "(Kahan kharch huye?)"}
+            </Label>
+            {kindCategories.length > 5 && (
+              <Select
+                value={watchedCategoryId ?? ""}
+                onValueChange={(v) => setValue("categoryId", v, { shouldValidate: true })}
+              >
+                <SelectTrigger className="h-7 text-[11px] border-dashed text-ink-soft px-2 w-auto gap-1">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {kindCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <AppIcon name={c.icon} className="size-3.5 shrink-0 text-ink-soft" />
+                        <span className="truncate">{c.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {visibleChips.map((c) => {
+              const active = watchedCategoryId === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setValue("categoryId", c.id, { shouldValidate: true })}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95",
+                    active
+                      ? "border-brand-emerald bg-brand-emerald/15 text-brand-emerald-deep font-semibold dark:text-[#53c6ac] ring-1 ring-brand-emerald shadow-xs"
+                      : "border-hairline bg-card text-ink-soft hover:border-brand-emerald/40 hover:text-ink",
+                  )}
+                >
+                  <AppIcon name={c.icon} className="size-3.5 shrink-0" />
+                  <span className="truncate max-w-[100px]">{c.name}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {errors.categoryId && (
+            <p className="text-[11.5px] font-medium text-danger-brand" role="alert">
+              {errors.categoryId.message}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ------------------------------------------------ Account Selection */}
+      {req.needsAccount && !req.needsToAccount && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold text-ink">
+              {type === "INCOME" || type === "BORROWED" || type === "REPAYMENT_RECEIVED" || type === "REFUND"
+                ? "Deposit to (Kahan jama huye?)"
+                : "Paid from (Kahan se diye?)"}
+            </Label>
+            {fromAccount && (
+              <span className="text-[11px] text-ink-soft font-mono">
+                Balance: {formatPKR(fromAccount.balance)}
+              </span>
+            )}
+          </div>
+          <AccountSelect
+            accounts={accounts}
+            value={watchedAccountId}
+            onChange={(v) => setValue("accountId", v, { shouldValidate: true })}
+            placeholder="Account chunein"
+          />
+          {errors.accountId && (
+            <p className="text-[11.5px] font-medium text-danger-brand" role="alert">
+              {errors.accountId.message}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Transfer Accounts */}
+      {req.needsToAccount && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-ink">Kahan se nikale?</Label>
+            <AccountSelect
+              accounts={accounts}
+              value={watchedAccountId}
+              onChange={(v) => setValue("accountId", v, { shouldValidate: true })}
+              excludeId={watchedToAccountId}
+              placeholder="Source account"
+            />
+            {errors.accountId && (
+              <p className="text-[11.5px] font-medium text-danger-brand">{errors.accountId.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-ink">Kahan transfer kiye?</Label>
+            <AccountSelect
+              accounts={accounts}
+              value={watchedToAccountId}
+              onChange={(v) => setValue("toAccountId", v, { shouldValidate: true })}
+              excludeId={watchedAccountId}
+              placeholder="Destination account"
+            />
+            {errors.toAccountId && (
+              <p className="text-[11.5px] font-medium text-danger-brand">{errors.toAccountId.message}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------ Person (Khata) */}
+      {req.needsPerson && (
         <Field
-          label="Person"
+          label="Banda (Person)"
           error={errors.personId?.message}
           hint={
             isRepayment(type)
-              ? "Repayments are recorded against this person's active debt."
+              ? "Wapsi is banday ke baqaya hisab mein se cut hogi."
               : undefined
           }
         >
@@ -629,8 +914,8 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
                 value={watchedPersonId ?? ""}
                 onValueChange={(v) => handlePersonChange(v)}
               >
-                <SelectTrigger className="min-h-11 w-full" aria-label="Select a person">
-                  <SelectValue placeholder="Select a person" />
+                <SelectTrigger className="h-10 w-full text-xs sm:text-sm" aria-label="Banda chunein">
+                  <SelectValue placeholder="Banda chunein (Select person)" />
                 </SelectTrigger>
                 <SelectContent className="max-h-64">
                   {people.map((p) => (
@@ -651,225 +936,191 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
             />
           </div>
         </Field>
-      ) : null}
+      )}
 
-      {/* ------------------------------------ debt select (repayments) */}
-      {isRepayment(type) ? (
+      {/* Repayment Debt Select */}
+      {isRepayment(type) && (
         <Field
-          label={type === "REPAYMENT_RECEIVED" ? "Debt to collect against" : "Debt to pay against"}
+          label={type === "REPAYMENT_RECEIVED" ? "Konsa udhar wapis mila?" : "Konsa udhar wapis diya?"}
           error={errors.debtId?.message}
           hint={
             selectedDebt
-              ? `Outstanding ${formatPKR(selectedDebt.outstanding)} of ${formatPKR(selectedDebt.principal)}`
+              ? `Baqaya ${formatPKR(selectedDebt.outstanding)} (Total: ${formatPKR(selectedDebt.principal)})`
               : undefined
           }
         >
           {!watchedPersonId ? (
             <Select disabled>
-              <SelectTrigger className="min-h-11 w-full">
-                <SelectValue placeholder="Choose a person first" />
+              <SelectTrigger className="h-10 w-full text-xs">
+                <SelectValue placeholder="Pehle banda select karein" />
               </SelectTrigger>
             </Select>
           ) : debtsLoading ? (
-            <div className="flex min-h-11 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-xs text-ink-soft">
-              <Spinner className="size-3.5" /> Loading active debts…
+            <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-xs text-ink-soft">
+              <Spinner className="size-3.5" /> Active udhar load ho rahe hain…
             </div>
           ) : debts.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-hairline bg-muted/40 px-3 py-2.5 text-[12px] leading-snug text-ink-soft">
-              No active {type === "REPAYMENT_RECEIVED" ? "receivable" : "payable"} debts for this
-              person. Record money lent/borrowed with a ledger entry first.
+            <p className="rounded-lg border border-dashed border-hairline bg-muted/40 px-3 py-2 text-[12px] leading-snug text-ink-soft">
+              Is banday ka koi active udhar nahi mila.
             </p>
           ) : (
             <Select value={watchedDebtId ?? ""} onValueChange={handleDebtChange}>
-              <SelectTrigger className="min-h-11 w-full" aria-label="Select the debt">
-                <SelectValue placeholder="Select the debt" />
+              <SelectTrigger className="h-10 w-full text-xs" aria-label="Select debt">
+                <SelectValue placeholder="Udhar select karein" />
               </SelectTrigger>
               <SelectContent className="max-h-64">
                 {debts.map((d) => (
                   <SelectItem key={d.id} value={d.id} className="text-xs">
-                    {formatPKR(d.principal)} · outstanding {formatPKR(d.outstanding)}
+                    Asal: {formatPKR(d.principal)} · Baqaya: {formatPKR(d.outstanding)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
         </Field>
-      ) : null}
+      )}
 
-      {/* ------------------------------------------------------ account */}
-      {req.needsAccount && !req.needsToAccount ? (
-        <Field
-          label={accountLabelFor(type)}
-          error={errors.accountId?.message}
-          hint={fromAccount ? `Available balance ${formatPKR(fromAccount.balance)}` : undefined}
-        >
-          <AccountSelect
-            accounts={accounts}
-            value={watchedAccountId}
-            onChange={(v) => setValue("accountId", v, { shouldValidate: true })}
-            placeholder={accountLabelFor(type)}
-          />
-        </Field>
-      ) : null}
-
-      {/* ------------------------------------ transfer from/to accounts */}
-      {req.needsToAccount ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field
-            label="From account"
-            error={errors.accountId?.message}
-            hint={fromAccount ? `Available balance ${formatPKR(fromAccount.balance)}` : undefined}
-          >
-            <AccountSelect
-              accounts={accounts}
-              value={watchedAccountId}
-              onChange={(v) => setValue("accountId", v, { shouldValidate: true })}
-              excludeId={watchedToAccountId}
-              placeholder="From account"
-            />
-          </Field>
-          <Field
-            label="To account"
-            error={errors.toAccountId?.message}
-            hint={toAccount ? `Current balance ${formatPKR(toAccount.balance)}` : undefined}
-          >
-            <AccountSelect
-              accounts={accounts}
-              value={watchedToAccountId}
-              onChange={(v) => setValue("toAccountId", v, { shouldValidate: true })}
-              excludeId={watchedAccountId}
-              placeholder="To account"
-            />
-          </Field>
-        </div>
-      ) : null}
-
-      {/* ----------------------------------------------------- category */}
-      {req.needsCategory ? (
-        <Field label="Category" error={errors.categoryId?.message}>
-          <Select
-            value={watchedCategoryId ?? ""}
-            onValueChange={(v) => setValue("categoryId", v, { shouldValidate: true })}
-          >
-            <SelectTrigger className="min-h-11 w-full" aria-label="Select a category">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent className="max-h-64">
-              {kindCategories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  <span className="flex min-w-0 items-center gap-2">
-                    <AppIcon name={c.icon} className="size-3.5 shrink-0 text-ink-soft" />
-                    <span className="truncate">{c.name}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-      ) : null}
-
-      {/* ------------------------------- ledger entry (LENT/BORROWED) */}
-      {isLentBorrowed(type) ? (
-        <div className="rounded-xl border border-hairline bg-muted/40 p-3">
+      {/* Ledger Checkbox (LENT / BORROWED) */}
+      {isLentBorrowed(type) && (
+        <div className="rounded-xl border border-hairline bg-muted/40 p-3 space-y-2.5">
           <label className="flex cursor-pointer items-start gap-2.5">
             <Checkbox
               checked={createLedger}
               onCheckedChange={(v) => setCreateLedger(v === true)}
               className="mt-0.5"
-              aria-label="Also create a ledger entry to track outstanding"
             />
-            <span className="text-[13px] font-medium leading-snug text-ink">
-              Also create a ledger entry (track outstanding)
-              <span className="mt-0.5 block text-[11.5px] font-normal leading-snug text-ink-soft">
+            <span className="text-[12.5px] font-semibold leading-snug text-ink">
+              Khata mein record karein (Track loan)
+              <span className="mt-0.5 block text-[11px] font-normal leading-snug text-ink-soft">
                 {createLedger
-                  ? "Creates a tracked debt with this person so repayments can be logged against it."
-                  : "Records only the cash movement — nothing will be tracked for repayment."}
+                  ? "Baqaya raqam is banday ke profile mein add ho jayegi taake wapsi track ho sakay."
+                  : "Sirf cash movement record hogi — khata mein baqaya hisab nahi banega."}
               </span>
             </span>
           </label>
-          {createLedger ? (
-            <div className="mt-3">
-              <Field label="Due date (optional)" htmlFor="raqamora-txn-due">
-                <Input
-                  id="raqamora-txn-due"
-                  type="date"
-                  className="min-h-11"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
-              </Field>
+          {createLedger && (
+            <div className="pt-1">
+              <Label htmlFor="raqamora-txn-due" className="text-[11.5px] font-medium text-ink-soft">
+                Wapsi ki tareekh (Due date - optional)
+              </Label>
+              <Input
+                id="raqamora-txn-due"
+                type="date"
+                className="h-9 text-xs mt-1"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
             </div>
-          ) : null}
+          )}
         </div>
-      ) : null}
+      )}
 
-      {/* --------------------------------------------------- adjustment */}
-      {req.needsReason ? (
-        <div className="space-y-3">
-          <Field label="Direction">
-            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Adjustment direction">
-              {(["INCREASE", "DECREASE"] as const).map((d) => {
-                const active = adjustDirection === d;
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setValue("adjustDirection", d, { shouldValidate: true })}
-                    className={cn(
-                      "flex min-h-11 items-center justify-center gap-1.5 rounded-lg border text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      active
-                        ? d === "INCREASE"
-                          ? "border-brand-emerald bg-brand-emerald/10 text-brand-emerald-deep"
-                          : "border-danger-brand bg-danger-brand/10 text-danger-brand"
-                        : "border-hairline text-ink-soft hover:text-ink",
-                    )}
-                  >
-                    {d === "INCREASE" ? (
-                      <ArrowUpRight className="size-4" aria-hidden />
-                    ) : (
-                      <ArrowDownRight className="size-4" aria-hidden />
-                    )}
-                    {d === "INCREASE" ? "Increase balance" : "Decrease balance"}
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
+      {/* Adjustment Fields */}
+      {req.needsReason && (
+        <div className="space-y-2.5 rounded-xl border border-hairline bg-muted/30 p-3">
+          <Label className="text-xs font-semibold text-ink">Adjustment Direction</Label>
+          <div className="grid grid-cols-2 gap-2" role="radiogroup">
+            {(["INCREASE", "DECREASE"] as const).map((d) => {
+              const active = adjustDirection === d;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setValue("adjustDirection", d, { shouldValidate: true })}
+                  className={cn(
+                    "flex h-9 items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-colors",
+                    active
+                      ? d === "INCREASE"
+                        ? "border-brand-emerald bg-brand-emerald/10 text-brand-emerald-deep font-semibold"
+                        : "border-danger-brand bg-danger-brand/10 text-danger-brand font-semibold"
+                      : "border-hairline text-ink-soft hover:text-ink",
+                  )}
+                >
+                  {d === "INCREASE" ? (
+                    <ArrowUpRight className="size-3.5" aria-hidden />
+                  ) : (
+                    <ArrowDownRight className="size-3.5" aria-hidden />
+                  )}
+                  {d === "INCREASE" ? "Balance Barhayein" : "Balance Kam Karein"}
+                </button>
+              );
+            })}
+          </div>
           <Field
-            label="Reason"
+            label="Wajah (Reason)"
             htmlFor="raqamora-txn-reason"
             error={errors.reason?.message}
-            hint="Required for adjustments — e.g. “Cash count correction”."
+            hint="Adjustment ke liye wajah likhna zaroori hai (e.g. Cash count correction)."
           >
             <Input
               id="raqamora-txn-reason"
               placeholder="e.g. Cash count correction"
               maxLength={500}
-              className="min-h-11"
+              className="h-9 text-xs"
               {...form.register("reason")}
             />
           </Field>
         </div>
-      ) : null}
+      )}
 
-      {/* ---------------------------------------------------------- note */}
-      <Field label="Note" htmlFor="raqamora-txn-note">
-        <Input
-          id="raqamora-txn-note"
-          placeholder="Optional note"
-          maxLength={500}
-          className="min-h-11"
-          {...form.register("note")}
-        />
-      </Field>
+      {/* ------------------------------------------------ Compact Date & Note */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-xl border border-hairline bg-muted/20 p-2.5">
+        <div>
+          <Label htmlFor="raqamora-txn-date" className="text-[11px] font-medium text-ink-soft">
+            Tareekh (Date & Time)
+          </Label>
+          <Input
+            id="raqamora-txn-date"
+            type="datetime-local"
+            className="h-8 text-xs mt-0.5"
+            {...form.register("date")}
+          />
+        </div>
+        <div>
+          <Label htmlFor="raqamora-txn-note" className="text-[11px] font-medium text-ink-soft">
+            Note (Optional tafseel)
+          </Label>
+          <Input
+            id="raqamora-txn-note"
+            placeholder="e.g. Chai, Lunch, Fuel"
+            maxLength={500}
+            className="h-8 text-xs mt-0.5"
+            {...form.register("note")}
+          />
+        </div>
+      </div>
 
-      {/* -------------------------------------------------------- submit */}
-      <Button type="submit" className="min-h-11 w-full text-[14px]" disabled={submitting}>
-        {submitting ? <Spinner className="size-4 text-current" /> : <Check className="size-4" aria-hidden />}
-        {submitting ? "Saving…" : "Save transaction"}
-      </Button>
+      {/* ------------------------------------------------ Submit Button */}
+      <div className="pt-1">
+        <Button
+          type="submit"
+          className="min-h-11 w-full text-[14px] font-semibold transition-all shadow-sm"
+          disabled={submitting}
+        >
+          {submitting ? (
+            <Spinner className="size-4 text-current mr-2" />
+          ) : (
+            <Check className="size-4 mr-2" aria-hidden />
+          )}
+          {submitting
+            ? "Save ho raha hai…"
+            : type === "EXPENSE"
+              ? "Save Kharcha"
+              : type === "INCOME"
+                ? "Save Aamdani"
+                : type === "TRANSFER"
+                  ? "Transfer Karein"
+                  : type === "LENT"
+                    ? "Save Khata (Diye)"
+                    : type === "BORROWED"
+                      ? "Save Khata (Liye)"
+                      : isRepayment(type)
+                        ? "Save Wapsi"
+                        : "Save Entry"}
+        </Button>
+      </div>
     </form>
   );
 }
