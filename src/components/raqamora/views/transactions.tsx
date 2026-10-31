@@ -16,6 +16,7 @@ import {
   Pencil,
   Plus,
   Search,
+  SlidersHorizontal,
   Trash2,
   User,
 } from "lucide-react";
@@ -296,6 +297,16 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
   const [editing, setEditing] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
+
+  const activeFilterCount = [
+    filters.type,
+    filters.categoryId,
+    filters.accountId,
+    filters.personId,
+    filters.from,
+    filters.to,
+  ].filter(Boolean).length;
 
   async function doDelete() {
     if (!selected) return;
@@ -347,8 +358,9 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
 
       {/* ------------------------------------------------- filter bar */}
       <SectionCard contentClassName="p-3 sm:p-4">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-12">
-          <div className="relative col-span-2 sm:col-span-6">
+        {/* Search & Mobile Filter Toggle */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-soft"
               aria-hidden
@@ -358,15 +370,55 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
               onChange={(e) => setQInput(e.target.value)}
               placeholder="Search notes & reasons…"
               aria-label="Search transactions"
-              className="min-h-11 pl-9"
+              className="min-h-11 rounded-xl pl-9 bg-muted/30 border-hairline/80"
             />
           </div>
 
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setMobileFiltersOpen((o) => !o)}
+            className={cn(
+              "md:hidden min-h-11 rounded-xl gap-1.5 px-3 border-hairline/80 font-medium",
+              activeFilterCount > 0 && "border-brand-emerald text-brand-emerald font-semibold bg-brand-emerald/10",
+            )}
+            aria-label="Toggle filters"
+          >
+            <SlidersHorizontal className="size-4" aria-hidden />
+            <span>Filters</span>
+            {activeFilterCount > 0 ? (
+              <span className="flex size-5 items-center justify-center rounded-full bg-brand-emerald text-[10px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            ) : null}
+          </Button>
+
+          {hasActiveFilters ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={clearFilters}
+              title="Clear filters"
+              aria-label="Clear filters"
+              className="md:hidden min-h-11 size-11 rounded-xl text-ink-soft hover:text-ink shrink-0"
+            >
+              <FilterX className="size-4" aria-hidden />
+            </Button>
+          ) : null}
+        </div>
+
+        {/* Detailed Filters (Collapsible on mobile, always visible on desktop) */}
+        <div
+          className={cn(
+            "grid-cols-2 gap-2 pt-3 sm:grid-cols-12",
+            mobileFiltersOpen ? "grid" : "hidden md:grid",
+          )}
+        >
           <Select value={filters.type || ALL} onValueChange={(v) => update({ type: v === ALL ? "" : v })}>
-            <SelectTrigger className="min-h-11 sm:col-span-3" aria-label="Filter by type">
+            <SelectTrigger className="min-h-11 rounded-xl sm:col-span-3" aria-label="Filter by type">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl">
               <SelectItem value={ALL}>All types</SelectItem>
               {TXN_TYPES.map((t) => (
                 <SelectItem key={t} value={t}>
@@ -377,10 +429,10 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
           </Select>
 
           <Select value={filters.sort} onValueChange={(v) => update({ sort: v })}>
-            <SelectTrigger className="min-h-11 sm:col-span-3" aria-label="Sort transactions">
+            <SelectTrigger className="min-h-11 rounded-xl sm:col-span-3" aria-label="Sort transactions">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl">
               {SORT_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -393,10 +445,10 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
             value={filters.categoryId || ALL}
             onValueChange={(v) => update({ categoryId: v === ALL ? "" : v })}
           >
-            <SelectTrigger className="min-h-11 sm:col-span-2" aria-label="Filter by category">
+            <SelectTrigger className="min-h-11 rounded-xl sm:col-span-2" aria-label="Filter by category">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="max-h-64">
+            <SelectContent className="max-h-64 rounded-xl">
               <SelectItem value={ALL}>All categories</SelectItem>
               <SelectGroup>
                 <SelectLabel>Expense</SelectLabel>
@@ -421,10 +473,10 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
             value={filters.accountId || ALL}
             onValueChange={(v) => update({ accountId: v === ALL ? "" : v })}
           >
-            <SelectTrigger className="min-h-11 sm:col-span-2" aria-label="Filter by account">
+            <SelectTrigger className="min-h-11 rounded-xl sm:col-span-2" aria-label="Filter by account">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="max-h-64">
+            <SelectContent className="max-h-64 rounded-xl">
               <SelectItem value={ALL}>All accounts</SelectItem>
               {base.accounts.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
@@ -439,10 +491,10 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
             value={filters.personId || ALL}
             onValueChange={(v) => update({ personId: v === ALL ? "" : v })}
           >
-            <SelectTrigger className="min-h-11 sm:col-span-2" aria-label="Filter by person">
+            <SelectTrigger className="min-h-11 rounded-xl sm:col-span-2" aria-label="Filter by person">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="max-h-64">
+            <SelectContent className="max-h-64 rounded-xl">
               <SelectItem value={ALL}>All people</SelectItem>
               {base.people.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
@@ -457,21 +509,21 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
             value={filters.from}
             onChange={(e) => update({ from: e.target.value })}
             aria-label="From date"
-            className="min-h-11 sm:col-span-1"
+            className="min-h-11 rounded-xl sm:col-span-2"
           />
           <Input
             type="date"
             value={filters.to}
             onChange={(e) => update({ to: e.target.value })}
             aria-label="To date"
-            className="min-h-11 sm:col-span-1"
+            className="min-h-11 rounded-xl sm:col-span-2"
           />
 
           <Button
             variant="ghost"
             onClick={clearFilters}
             disabled={!hasActiveFilters}
-            className="col-span-2 min-h-11 gap-1.5 text-ink-soft hover:text-ink sm:col-span-2"
+            className="col-span-2 hidden md:inline-flex min-h-11 rounded-xl gap-1.5 text-ink-soft hover:text-ink sm:col-span-2"
           >
             <FilterX className="size-4" aria-hidden /> Clear filters
           </Button>
@@ -597,7 +649,7 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
 
           {/* mobile stacked rows */}
           <div
-            className={cn("grid gap-2 md:hidden", loading && "pointer-events-none opacity-60")}
+            className={cn("grid gap-2.5 md:hidden", loading && "pointer-events-none opacity-60")}
             aria-label="Transactions"
           >
             {txns.map((t) => {
@@ -607,27 +659,27 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
                   key={t.id}
                   type="button"
                   onClick={() => setSelected(t)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-hairline bg-card p-3 text-left shadow-card transition-colors hover:border-brand-emerald/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex w-full items-center gap-3 rounded-2xl border border-hairline/80 bg-card p-3.5 text-left shadow-card transition-all duration-150 active:scale-[0.98] active:bg-muted/40 hover:border-brand-emerald/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span
-                    className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-ink-soft"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-ink-soft shadow-2xs"
                     aria-hidden
                   >
-                    <AppIcon name={t.categoryIcon} className="size-4" />
+                    <AppIcon name={t.categoryIcon} className="size-4.5" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13.5px] font-medium text-ink">
+                    <span className="block truncate text-[13.5px] font-semibold text-ink">
                       {rowTitle(t)}
                     </span>
                     <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft">
-                      <TypeBadge type={t.type} className="shrink-0 px-1 py-0 text-[9px]" />
+                      <TypeBadge type={t.type} className="shrink-0 px-1.5 py-0 text-[9px] rounded-md" />
                       <span className="truncate">
                         {fmtDay(t.date)}
                         {t.personName ? ` · ${t.personName}` : ""}
                       </span>
                     </span>
                   </span>
-                  <span className={cn("money shrink-0 text-[14px] font-semibold", a.className)}>
+                  <span className={cn("money shrink-0 text-[14.5px] font-bold", a.className)}>
                     {a.text}
                   </span>
                 </button>

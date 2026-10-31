@@ -43,100 +43,100 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* ---- RAQAMORA brand palette ---- */
-  --color-navy: #101c2c; /* midnight navy — deep surfaces, sidebar */
-  --color-navy-raised: #17273d; /* elevated navy surface */
-  --color-ivory: #f7f5ef; /* warm ivory app background */
-  --color-brand-emerald: #16836f; /* primary actions, positive money */
-  --color-brand-emerald-deep: #0d5f4f; /* emerald hover / strong text */
-  --color-gold: #c5a46d; /* champagne gold — brand accent only */
-  --color-gold-deep: #8a6d3b; /* readable gold on ivory */
-  --color-ink: #202a36; /* text primary */
-  --color-ink-soft: #747e8b; /* text secondary */
-  --color-hairline: #e4e0d5; /* hairline borders on ivory */
-  --color-danger-brand: #b4453a; /* overdue / negative */
-  --color-warn-brand: #b98a2f; /* warning amber */
-  --color-money-pos: #16836f;
-  --color-money-neg: #b4453a;
+  /* ---- RAQAMORA modern fintech palette ---- */
+  --color-navy: #0b1320; /* sleek midnight obsidian navy — sidebar & hero */
+  --color-navy-raised: #131f33; /* elevated dark surface */
+  --color-ivory: #f8fafc; /* crisp clean slate canvas */
+  --color-brand-emerald: #059669; /* vibrant emerald primary */
+  --color-brand-emerald-deep: #047857; /* deep emerald hover */
+  --color-gold: #d97706; /* refined gold/amber accent */
+  --color-gold-deep: #b45309; /* readable gold on light */
+  --color-ink: #0f172a; /* deep slate-900 text */
+  --color-ink-soft: #64748b; /* slate-500 secondary text */
+  --color-hairline: #e2e8f0; /* clean slate-200 border */
+  --color-danger-brand: #e11d48; /* rose-600 negative/danger */
+  --color-warn-brand: #d97706; /* amber warning */
+  --color-money-pos: #059669;
+  --color-money-neg: #e11d48;
 
-  /* ---- Typography & elevation ---- */
-  --shadow-card: 0 1px 2px 0 rgb(16 28 44 / 0.04), 0 1px 3px 0 rgb(16 28 44 / 0.03);
-  --shadow-raised: 0 10px 30px -12px rgb(16 28 44 / 0.22), 0 2px 6px -2px rgb(16 28 44 / 0.08);
+  /* ---- Modern elevation ---- */
+  --shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.04), 0 1px 2px -1px rgb(15 23 42 / 0.04);
+  --shadow-raised: 0 12px 30px -8px rgb(15 23 42 / 0.12), 0 4px 12px -2px rgb(15 23 42 / 0.06);
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.75rem;
   --font-app-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --font-app-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
-  /* Light mode — warm ivory, white cards, navy ink, emerald primary */
-  --background: #f7f5ef;
-  --foreground: #202a36;
+  /* Modern Light mode — crisp slate-50, pure white cards, deep slate ink, emerald primary */
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #202a36;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #202a36;
-  --primary: #16836f;
+  --popover-foreground: #0f172a;
+  --primary: #059669;
   --primary-foreground: #ffffff;
-  --secondary: #efebe0;
-  --secondary-foreground: #202a36;
-  --muted: #f0ede3;
-  --muted-foreground: #747e8b;
-  --accent: #eae6d9;
-  --accent-foreground: #202a36;
-  --destructive: #b4453a;
-  --border: #e4e0d5;
-  --input: #dbd6c8;
-  --ring: #16836f;
-  --chart-1: #16836f;
-  --chart-2: #c5a46d;
-  --chart-3: #101c2c;
-  --chart-4: #b98a2f;
-  --chart-5: #b4453a;
-  --sidebar: #101c2c;
-  --sidebar-foreground: #f2efe6;
-  --sidebar-primary: #16836f;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --destructive: #e11d48;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #059669;
+  --chart-1: #059669;
+  --chart-2: #d97706;
+  --chart-3: #0b1320;
+  --chart-4: #0284c7;
+  --chart-5: #e11d48;
+  --sidebar: #0b1320;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #059669;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a2c44;
-  --sidebar-accent-foreground: #f2efe6;
-  --sidebar-border: #24364e;
-  --sidebar-ring: #c5a46d;
+  --sidebar-accent: #131f33;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #d97706;
 }
 
 .dark {
-  /* Dark mode — deep navy, kept premium and functional */
-  --background: #0c1521;
-  --foreground: #e9edf3;
-  --card: #121e2e;
-  --card-foreground: #e9edf3;
-  --popover: #121e2e;
-  --popover-foreground: #e9edf3;
-  --primary: #2ba48a;
-  --primary-foreground: #06120d;
-  --secondary: #1a293c;
-  --secondary-foreground: #e9edf3;
-  --muted: #162334;
-  --muted-foreground: #93a1b3;
-  --accent: #1a293c;
-  --accent-foreground: #e9edf3;
-  --destructive: #cd6a5e;
-  --border: #22334a;
-  --input: #2b3d55;
-  --ring: #2ba48a;
-  --chart-1: #2ba48a;
-  --chart-2: #d4b57e;
-  --chart-3: #8fa3bc;
-  --chart-4: #d09c3f;
-  --chart-5: #d0705f;
-  --sidebar: #0a121d;
-  --sidebar-foreground: #e9edf3;
-  --sidebar-primary: #2ba48a;
-  --sidebar-primary-foreground: #06120d;
-  --sidebar-accent: #142234;
-  --sidebar-accent-foreground: #e9edf3;
-  --sidebar-border: #1d2e44;
-  --sidebar-ring: #c5a46d;
+  /* Modern Dark mode — obsidian midnight */
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --primary: #10b981;
+  --primary-foreground: #090d16;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+  --destructive: #f43f5e;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #10b981;
+  --chart-1: #10b981;
+  --chart-2: #fbbf24;
+  --chart-3: #38bdf8;
+  --chart-4: #f43f5e;
+  --chart-5: #a855f7;
+  --sidebar: #090d16;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #090d16;
+  --sidebar-accent: #131f33;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #fbbf24;
 }
 
 @layer base {
@@ -145,10 +145,17 @@
   }
   html {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-app-sans);
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  button, a, input, select, textarea {
+    touch-action: manipulation;
   }
   ::selection {
     background: rgb(197 164 109 / 0.35);
@@ -164,7 +171,18 @@
   }
   /* iOS safe area helper for bottom chrome */
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .safe-top {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+  /* Flutter / Native tactile press animation */
+  .tap-press {
+    transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), opacity 120ms ease;
+  }
+  .tap-press:active {
+    transform: scale(0.96);
+    opacity: 0.9;
   }
   /* Hide scrollbar for Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {

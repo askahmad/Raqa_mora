@@ -292,28 +292,28 @@ function OwedCard({
 }) {
   const moneyTone = tone === "pos" ? "text-money-pos" : "text-money-neg";
   return (
-    <div className="rounded-xl border border-hairline bg-card p-4 shadow-card">
+    <div className="rounded-2xl border border-hairline/80 bg-card p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">{title}</p>
-          <Money value={amount} size="lg" className={cn("mt-0.5", moneyTone)} />
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">{title}</p>
+          <Money value={amount} size="lg" className={cn("mt-1 text-xl font-bold", moneyTone)} />
         </div>
-        <Button variant="outline" size="sm" className="min-h-9 shrink-0" onClick={onOpen}>
+        <Button variant="outline" size="sm" className="h-8 rounded-xl shrink-0 text-xs font-semibold active:scale-95 transition-transform" onClick={onOpen}>
           Debts
-          <ArrowRight className="size-3.5" aria-hidden />
+          <ArrowRight className="size-3.5 ml-1" aria-hidden />
         </Button>
       </div>
       {people.length > 0 ? (
-        <div className="mt-3 space-y-1.5 border-t border-hairline pt-2.5">
+        <div className="mt-3.5 space-y-2 border-t border-hairline/70 pt-3">
           {people.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-2 text-xs">
-              <span className="truncate text-ink-soft">{p.name}</span>
-              <Money value={p.amount} size="sm" className={moneyTone} />
+              <span className="truncate text-ink-soft font-medium">{p.name}</span>
+              <Money value={p.amount} size="sm" className={cn("font-semibold", moneyTone)} />
             </div>
           ))}
         </div>
       ) : (
-        <p className="mt-3 border-t border-hairline pt-2.5 text-xs text-ink-soft">
+        <p className="mt-3 border-t border-hairline/70 pt-2.5 text-xs text-ink-soft">
           Nothing outstanding — all settled.
         </p>
       )}
@@ -579,98 +579,202 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Dashboard" description="Your money at a glance" />
-
-      {/* ------------------------------------------------ period selector */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div
-          role="group"
-          aria-label="Period"
-          className="flex gap-1 overflow-x-auto rounded-lg border border-hairline bg-card p-1 shadow-card"
-        >
-          {RANGE_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              aria-pressed={rangeKey === opt.key}
-              onClick={() => setRangeKey(opt.key)}
-              className={cn(
-                "min-h-8 shrink-0 rounded-md px-3 text-[13px] font-medium transition-colors",
-                rangeKey === opt.key
-                  ? "bg-brand-emerald text-white"
-                  : "text-ink-soft hover:bg-accent hover:text-ink",
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
+      {/* ------------------------------------------------ Header & Period Selector */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-ink">
+            Assalam-o-Alaikum, {user.name.split(" ")[0]}
+          </h1>
+          <p className="text-xs text-ink-soft">
+            {d.period.label === "Custom Range" && customApplied
+              ? `${fmtDayFull(d.period.from)} – ${fmtDayFull(d.period.to)}`
+              : d.period.label} · Financial Summary
+          </p>
         </div>
 
-        <Popover open={customOpen} onOpenChange={setCustomOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn("min-h-9", rangeKey === "custom" && "border-brand-emerald/50 text-brand-emerald-deep")}
-              onClick={() => {
-                if (customApplied) setRangeKey("custom");
-                else openCustomDraft();
-              }}
-            >
-              <CalendarDays className="size-4" aria-hidden />
-              Custom
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-72">
-            <div className="grid gap-3">
-              <p className="text-sm font-semibold text-ink">Custom range</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="rq-dash-from">From</Label>
-                  <Input
-                    id="rq-dash-from"
-                    type="date"
-                    value={customFrom}
-                    max={customTo || undefined}
-                    onChange={(e) => setCustomFrom(e.target.value)}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <div
+            role="group"
+            aria-label="Period"
+            className="flex gap-1 rounded-2xl border border-hairline/80 bg-muted/40 p-1 shadow-2xs"
+          >
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                aria-pressed={rangeKey === opt.key}
+                onClick={() => setRangeKey(opt.key)}
+                className={cn(
+                  "relative min-h-8 shrink-0 rounded-xl px-3 text-[12px] font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none",
+                  rangeKey === opt.key ? "text-brand-emerald font-bold" : "text-slate-500 hover:text-slate-900",
+                )}
+              >
+                {rangeKey === opt.key && (
+                  <motion.div
+                    layoutId="activePeriodIndicator"
+                    className="absolute inset-0 rounded-xl bg-card shadow-xs border border-hairline/60"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="rq-dash-to">To</Label>
-                  <Input
-                    id="rq-dash-to"
-                    type="date"
-                    value={customTo}
-                    min={customFrom || undefined}
-                    onChange={(e) => setCustomTo(e.target.value)}
-                  />
-                </div>
-              </div>
-              <Button size="sm" className="min-h-9" onClick={applyCustom}>
-                Apply range
+                )}
+                <span className="relative z-10">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <Popover open={customOpen} onOpenChange={setCustomOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "min-h-8 h-8 rounded-xl px-2.5 text-xs active:scale-95 transition-transform",
+                  rangeKey === "custom" && "border-brand-emerald/50 text-brand-emerald-deep font-semibold",
+                )}
+                onClick={() => {
+                  if (customApplied) setRangeKey("custom");
+                  else openCustomDraft();
+                }}
+              >
+                <CalendarDays className="size-3.5 mr-1" aria-hidden />
+                Custom
               </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 rounded-2xl">
+              <div className="grid gap-3">
+                <p className="text-sm font-semibold text-ink">Custom range</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="rq-dash-from">From</Label>
+                    <Input
+                      id="rq-dash-from"
+                      type="date"
+                      value={customFrom}
+                      max={customTo || undefined}
+                      onChange={(e) => setCustomFrom(e.target.value)}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="rq-dash-to">To</Label>
+                    <Input
+                      id="rq-dash-to"
+                      type="date"
+                      value={customTo}
+                      min={customFrom || undefined}
+                      onChange={(e) => setCustomTo(e.target.value)}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
+                <Button size="sm" className="min-h-9 rounded-xl" onClick={applyCustom}>
+                  Apply range
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
-      <p className="-mt-2 text-xs text-ink-soft" aria-live="polite">
-        {d.period.label === "Custom Range" && customApplied
-          ? `${fmtDayFull(d.period.from)} – ${fmtDayFull(d.period.to)}`
-          : d.period.label}
-      </p>
 
       {firstRun ? (
         <FirstRunHero onAddAccount={() => onViewChange("accounts")} onDemo={(u) => setUser(u)} />
       ) : (
         <>
-          {/* ------------------------------------------------ metric row */}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {/* ------------------------------------------------ Mobile Fintech Card Layout */}
+          <div className="md:hidden space-y-3">
+            {/* Luxury Metal Wallet Card */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy via-navy to-navy-raised p-5 text-ivory shadow-raised border border-white/10">
+              {/* Subtle background glow circle */}
+              <div className="pointer-events-none absolute -right-12 -top-12 size-36 rounded-full bg-brand-emerald/20 blur-2xl" />
+              <div className="pointer-events-none absolute -left-12 -bottom-12 size-36 rounded-full bg-gold/15 blur-2xl" />
+
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ivory/60">
+                  Total Available Balance
+                </span>
+                <span className="flex size-7 items-center justify-center rounded-xl bg-white/10 text-gold border border-white/10">
+                  <Wallet className="size-3.5" aria-hidden />
+                </span>
+              </div>
+
+              <div className="mt-2.5">
+                <Money value={d.totalBalance} size="xl" className="text-3xl font-extrabold tracking-tight text-white" />
+                <p className="mt-1 text-xs text-ivory/60 font-medium">
+                  {d.accounts.length > 0
+                    ? `Consolidated across ${d.accounts.length} account${d.accounts.length === 1 ? "" : "s"}`
+                    : "No accounts added yet"}
+                </p>
+              </div>
+
+              {/* Quick Action Chips */}
+              <div className="mt-4 flex items-center gap-2 pt-3 border-t border-white/10">
+                <Button
+                  size="sm"
+                  className="h-8 flex-1 rounded-xl bg-brand-emerald text-white text-xs font-bold shadow-xs hover:bg-brand-emerald-deep active:scale-95 transition-transform"
+                  onClick={() => window.dispatchEvent(new Event("raqamora:quick-add"))}
+                >
+                  <Plus className="size-3.5 mr-1" aria-hidden />
+                  Add Entry
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 flex-1 rounded-xl text-xs font-medium border-white/15 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-transform"
+                  onClick={() => onViewChange("accounts")}
+                >
+                  <Wallet className="size-3.5 mr-1 text-ivory/70" aria-hidden />
+                  Accounts
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 flex-1 rounded-xl text-xs font-medium border-white/15 bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-transform"
+                  onClick={() => onViewChange("debts")}
+                >
+                  <HandCoins className="size-3.5 mr-1 text-ivory/70" aria-hidden />
+                  Debts
+                </Button>
+              </div>
+            </div>
+
+            {/* Income & Expense (2 Clean Columns) */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <StatCard
+                label="Income"
+                value={d.summary.income}
+                trend={incomeTrend ?? undefined}
+                className="p-3.5 rounded-2xl"
+              />
+              <StatCard
+                label="Expenses"
+                value={d.summary.netExpense}
+                trend={expenseTrend ?? undefined}
+                className="p-3.5 rounded-2xl"
+              />
+            </div>
+
+            {/* Net Position (Full width sleek banner) */}
+            <div className="rounded-2xl border border-hairline/80 bg-card p-3.5 shadow-card flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+                  Net Financial Position
+                </p>
+                <p className="text-[11px] text-ink-soft mt-0.5">
+                  Cash + Receivables − Payables
+                </p>
+              </div>
+              <Money value={d.netPosition} size="lg" className="font-extrabold text-ink shrink-0" />
+            </div>
+          </div>
+
+          {/* ------------------------------------------------ Desktop 4-Column Metric Row */}
+          <div className="hidden md:grid md:grid-cols-4 gap-3.5">
             {metrics.map((m, i) => (
               <motion.div
                 key={m.key}
-                initial={reduced ? false : { opacity: 0, y: 10 }}
+                initial={reduced ? false : { opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: reduced ? 0 : i * 0.05 }}
+                transition={{ duration: 0.25, delay: reduced ? 0 : i * 0.05 }}
+                whileHover={{ y: -3, transition: { duration: 0.15 } }}
               >
                 <StatCard
                   label={m.label}

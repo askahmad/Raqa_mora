@@ -95,6 +95,12 @@ export function AppRoot() {
   const [authMode, setAuthMode] = React.useState<AuthMode | null>(null);
   const [quickAddOpen, setQuickAddOpen] = React.useState(false);
 
+  React.useEffect(() => {
+    const handler = () => setQuickAddOpen(true);
+    window.addEventListener("raqamora:quick-add", handler);
+    return () => window.removeEventListener("raqamora:quick-add", handler);
+  }, []);
+
   const enterAsUser = React.useCallback((u: SessionUser) => {
     setUser(u);
     setView("dashboard");

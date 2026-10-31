@@ -65,7 +65,7 @@ function DialogContent({
           "inset-x-0 bottom-0 rounded-t-[28px] border-t border-hairline max-h-[92dvh] overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] w-full",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-6 data-[state=closed]:slide-out-to-bottom-6",
           // Desktop: Centered dialog modal
-          "sm:top-[50%] sm:left-[50%] sm:bottom-auto sm:inset-x-auto sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-lg sm:rounded-2xl sm:p-6 sm:border sm:max-h-[calc(100dvh-2rem)]",
+          "sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:right-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:rounded-2xl sm:p-6 sm:border sm:max-h-[calc(100dvh-2rem)]",
           "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=closed]:slide-out-to-bottom-0",
           className
         )}

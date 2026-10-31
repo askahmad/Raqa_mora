@@ -82,24 +82,24 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-xl border border-hairline bg-card p-4 shadow-card", className)}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">
+    <div className={cn("rounded-2xl border border-hairline/80 bg-card p-3 sm:p-4 shadow-card transition-all active:scale-[0.99]", className)}>
+      <div className="flex items-center justify-between gap-1.5">
+        <span className="truncate text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
           {label}
         </span>
         {Icon ? (
-          <span className="flex size-7 items-center justify-center rounded-lg bg-brand-emerald/10 text-brand-emerald">
-            <Icon className="size-3.5" aria-hidden />
+          <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-brand-emerald/10 text-brand-emerald">
+            <Icon className="size-3 sm:size-3.5" aria-hidden />
           </span>
         ) : null}
       </div>
-      <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <Money value={value} size="lg" />
+      <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+        <Money value={value} size="md" className="text-[15px] sm:text-lg font-bold" />
         {trend ? (
           <Badge
             variant="outline"
             className={cn(
-              "px-1.5 py-0 text-[10px]",
+              "px-1 py-0 text-[9px] sm:text-[10px] leading-tight",
               trend.positive === false
                 ? "border-danger-brand/25 bg-danger-brand/10 text-danger-brand"
                 : "border-brand-emerald/25 bg-brand-emerald/10 text-brand-emerald-deep",
@@ -109,7 +109,7 @@ export function StatCard({
           </Badge>
         ) : null}
       </div>
-      {sub ? <p className="mt-1 text-xs leading-relaxed text-ink-soft">{sub}</p> : null}
+      {sub ? <p className="mt-1 truncate text-[10.5px] sm:text-xs leading-relaxed text-ink-soft">{sub}</p> : null}
     </div>
   );
 }
@@ -133,11 +133,11 @@ export function SectionCard({
 }) {
   const hasHeader = Boolean(title || subtitle || action);
   return (
-    <section className={cn("rounded-xl border border-hairline bg-card shadow-card", className)}>
+    <section className={cn("rounded-2xl border border-hairline/80 bg-card shadow-sm transition-all", className)}>
       {hasHeader ? (
         <header className="flex items-start justify-between gap-3 px-4 pb-1 pt-4 sm:px-5 sm:pt-5">
           <div className="min-w-0">
-            {title ? <h2 className="text-sm font-semibold text-ink">{title}</h2> : null}
+            {title ? <h2 className="text-sm sm:text-[15px] font-bold text-ink">{title}</h2> : null}
             {subtitle ? <p className="mt-0.5 text-xs text-ink-soft">{subtitle}</p> : null}
           </div>
           {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
@@ -301,10 +301,10 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="flex flex-wrap items-start justify-between gap-3 pb-1">
       <div className="min-w-0">
-        <h1 className="text-lg font-semibold tracking-tight text-ink">{title}</h1>
-        {description ? <p className="mt-0.5 text-sm text-ink-soft">{description}</p> : null}
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-ink">{title}</h1>
+        {description ? <p className="mt-0.5 text-xs sm:text-sm text-ink-soft">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
