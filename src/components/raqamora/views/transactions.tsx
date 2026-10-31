@@ -620,6 +620,11 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
                           <span className="min-w-0">
                             <span className="block truncate text-[13.5px] font-medium text-ink">
                               {rowTitle(t)}
+                              {t.offlinePending ? (
+                                <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
+                                  ⏳ Offline
+                                </span>
+                              ) : null}
                             </span>
                             {t.personName ? (
                               <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0 text-[10px] font-medium text-ink-soft">
@@ -670,6 +675,11 @@ export default function TransactionsView({ onViewChange }: ViewProps) {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13.5px] font-semibold text-ink">
                       {rowTitle(t)}
+                      {t.offlinePending ? (
+                        <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
+                          ⏳ Offline
+                        </span>
+                      ) : null}
                     </span>
                     <span className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft">
                       <TypeBadge type={t.type} className="shrink-0 px-1.5 py-0 text-[9px] rounded-md" />

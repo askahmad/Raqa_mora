@@ -28,6 +28,14 @@ async function handle<T>(res: Response): Promise<T> {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
+  // If explicitly offline, check cache immediately without waiting for fetch error
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const cached = getCachedGet<T>(path);
+    if (cached !== null) {
+      return cached;
+    }
+  }
+
   try {
     const res = await fetch(path, { credentials: "same-origin", cache: "no-store" });
     const data = await handle<T>(res);
@@ -47,12 +55,12 @@ export async function apiSend<T>(
   path: string,
   method: "POST" | "PATCH" | "DELETE",
   payload?: unknown,
-  title?: string
+  title?: string,
 ): Promise<T> {
   // If explicitly offline
   if (typeof navigator !== "undefined" && !navigator.onLine) {
-    enqueueMutation(path, method, payload, title);
-    return { ok: true, offline: true } as T;
+    const queued = enqueueMutation(path, method, payload, title);
+    return { ok: true, offline: true, id: queued.id } as T;
   }
 
   try {
@@ -69,8 +77,8 @@ export async function apiSend<T>(
       (typeof navigator !== "undefined" && !navigator.onLine);
 
     if (isNetworkError) {
-      enqueueMutation(path, method, payload, title);
-      return { ok: true, offline: true } as T;
+      const queued = enqueueMutation(path, method, payload, title);
+      return { ok: true, offline: true, id: queued.id } as T;
     }
     throw err;
   }

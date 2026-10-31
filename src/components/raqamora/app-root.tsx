@@ -9,6 +9,7 @@ import nextDynamic from "next/dynamic";
 import type { ComponentType } from "react";
 
 import { ApiError, apiGet, apiSend } from "@/lib/raqamora/client";
+import { getCachedUser, setCachedUser } from "@/lib/raqamora/offline-sync";
 import type { SessionUser } from "@/lib/raqamora/types";
 import type { ViewKey, ViewProps } from "@/components/raqamora/view-props";
 import { AppShell } from "@/components/raqamora/shell";
@@ -102,6 +103,7 @@ export function AppRoot() {
   }, []);
 
   const enterAsUser = React.useCallback((u: SessionUser) => {
+    setCachedUser(u);
     setUser(u);
     setView("dashboard");
     setAuthMode(null);
@@ -109,6 +111,7 @@ export function AppRoot() {
   }, []);
 
   const goGuest = React.useCallback(() => {
+    setCachedUser(null);
     setUser(null);
     setUnreadCount(0);
     setView("dashboard");
@@ -136,19 +139,65 @@ export function AppRoot() {
   React.useEffect(() => {
     let alive = true;
     (async () => {
+      // 1. Instant check for cached session (works offline)
+      const cached = getCachedUser();
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+
+      if (offline && cached) {
+        if (!alive) return;
+        enterAsUser(cached);
+        return;
+      }
+
       try {
         const { user: me } = await apiGet<{ user: SessionUser | null }>("/api/auth/me");
         if (!alive) return;
-        if (me) enterAsUser(me);
-        else setPhase("guest");
-      } catch {
-        if (alive) setPhase("guest");
+        if (me) {
+          enterAsUser(me);
+        } else {
+          setPhase("guest");
+        }
+      } catch (err) {
+        if (!alive) return;
+        // If network error/timeout/offline but we have a valid cached user, stay logged in
+        if (cached && !(err instanceof ApiError && err.status === 401)) {
+          enterAsUser(cached);
+        } else {
+          setPhase("guest");
+        }
       }
     })();
     return () => {
       alive = false;
     };
   }, [enterAsUser]);
+
+  // Proactively prefetch dynamic view chunks so all views are cached offline
+  React.useEffect(() => {
+    if (phase !== "app") return;
+    const prefetchViews = () => {
+      import("@/components/raqamora/views/dashboard");
+      import("@/components/raqamora/views/transactions");
+      import("@/components/raqamora/views/accounts");
+      import("@/components/raqamora/views/people");
+      import("@/components/raqamora/views/debts");
+      import("@/components/raqamora/views/budgets");
+      import("@/components/raqamora/views/goals");
+      import("@/components/raqamora/views/recurring");
+      import("@/components/raqamora/views/reports");
+      import("@/components/raqamora/views/notifications");
+      import("@/components/raqamora/views/settings");
+      import("@/components/raqamora/views/transaction-quick-add");
+    };
+
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        (window as any).requestIdleCallback(prefetchViews, { timeout: 2500 });
+      } else {
+        setTimeout(prefetchViews, 1200);
+      }
+    }
+  }, [phase]);
 
   /* Unread notifications: fetch on app entry, then every 60s */
   const refreshUnread = React.useCallback(async () => {

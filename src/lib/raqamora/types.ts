@@ -39,6 +39,7 @@ export interface DebtWithOutstanding {
   status: string;
   note: string | null;
   createdAt: string;
+  offlinePending?: boolean;
 }
 
 export interface TxnRow {
@@ -60,6 +61,7 @@ export interface TxnRow {
   personName: string | null;
   debtId: string | null;
   createdAt: string;
+  offlinePending?: boolean;
 }
 
 export interface CategoryRow {
