@@ -142,17 +142,25 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
   html {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-app-sans);
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    position: relative;
   }
   button, a, input, select, textarea {
     touch-action: manipulation;

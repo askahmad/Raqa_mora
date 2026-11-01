@@ -5,7 +5,7 @@
  * Completely redesigned for modern aesthetics (Stripe/Linear/Mercury tier),
  * interactive micro-interactions, rich animations, dark/light compatibility,
  * and comprehensive SEO, AEO (Answer Engine Optimization) & GEO (Generative Engine Optimization).
- * Fully responsive across Mobile (320px+), Tablet, and Desktop.
+ * 100% Fully responsive across Mobile (320px+), Tablet, and Desktop.
  */
 import * as React from "react";
 import {
@@ -78,10 +78,10 @@ function Reveal({
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
+      viewport={{ once: true, margin: "-20px" }}
+      transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </motion.div>
@@ -97,14 +97,14 @@ function InteractiveFinancialMockup() {
 
   return (
     <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-      {/* Decorative ambient glowing orbs - constrained to avoid horizontal overflow */}
-      <div className="pointer-events-none absolute -left-6 -top-6 size-36 sm:size-48 rounded-full bg-brand-emerald/20 blur-2xl sm:blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-6 -right-6 size-36 sm:size-48 rounded-full bg-gold/20 blur-2xl sm:blur-3xl" />
-
-      {/* Main glass frame */}
+      {/* Main glass frame with ambient glowing orbs enclosed */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-hairline/80 bg-white/90 p-3.5 sm:p-6 shadow-raised backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1320]/90">
+        {/* Decorative ambient glowing orbs - placed inside overflow-hidden to guarantee zero page overflow */}
+        <div className="pointer-events-none absolute -left-10 -top-10 size-44 rounded-full bg-brand-emerald/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-10 -right-10 size-44 rounded-full bg-gold/15 blur-3xl" />
+
         {/* Mock OS Header */}
-        <div className="flex items-center justify-between gap-2 border-b border-hairline/60 pb-3 sm:pb-4 dark:border-white/10">
+        <div className="relative z-10 flex items-center justify-between gap-2 border-b border-hairline/60 pb-3 sm:pb-4 dark:border-white/10">
           <div className="flex items-center gap-2">
             <span className="flex size-2.5 sm:size-3 rounded-full bg-red-400/80" />
             <span className="flex size-2.5 sm:size-3 rounded-full bg-amber-400/80" />
@@ -121,14 +121,14 @@ function InteractiveFinancialMockup() {
           </div>
         </div>
 
-        {/* Tab Switcher - smooth horizontal scroll on small devices */}
-        <div className="mt-3 sm:mt-4 flex gap-1 sm:gap-1.5 overflow-x-auto rounded-xl sm:rounded-2xl border border-hairline/80 bg-muted/50 p-1 no-scrollbar dark:border-white/10 dark:bg-white/5">
+        {/* Tab Switcher - Responsive 4-column layout on all mobile screens */}
+        <div className="relative z-10 mt-3 sm:mt-4 grid grid-cols-4 gap-1 rounded-xl sm:rounded-2xl border border-hairline/80 bg-muted/50 p-1 dark:border-white/10 dark:bg-white/5">
           {(
             [
-              { id: "wallets", label: "Wallets", icon: Wallet },
-              { id: "khata", label: "Digital Khata", icon: Users },
-              { id: "budgets", label: "Budget", icon: Target },
-              { id: "savings", label: "Savings Intel", icon: PiggyBank },
+              { id: "wallets", label: "Wallets", shortLabel: "Wallets", icon: Wallet },
+              { id: "khata", label: "Digital Khata", shortLabel: "Khata", icon: Users },
+              { id: "budgets", label: "Monthly Budget", shortLabel: "Budget", icon: Target },
+              { id: "savings", label: "Savings Intel", shortLabel: "Savings", icon: PiggyBank },
             ] as const
           ).map((tab) => {
             const Icon = tab.icon;
@@ -138,29 +138,32 @@ function InteractiveFinancialMockup() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex min-h-8 shrink-0 sm:shrink sm:flex-1 items-center justify-center gap-1.5 rounded-lg sm:rounded-xl px-2.5 sm:px-3 text-xs font-semibold transition-all duration-200 active:scale-95 whitespace-nowrap ${
+                className={`relative flex min-h-8 items-center justify-center gap-1 rounded-lg sm:rounded-xl px-1.5 sm:px-3 text-center transition-all duration-200 active:scale-95 ${
                   isActive
                     ? "bg-white text-ink shadow-2xs dark:bg-card dark:text-white"
                     : "text-ink-soft hover:text-ink dark:hover:text-white"
                 }`}
               >
-                <Icon className="size-3.5 shrink-0" />
-                <span>{tab.label}</span>
+                <Icon className="size-3.5 shrink-0 hidden xs:inline-block sm:inline-block" />
+                <span className="truncate text-[11px] sm:text-xs font-semibold">
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </span>
               </button>
             );
           })}
         </div>
 
         {/* Dynamic Tab Content */}
-        <div className="mt-3.5 sm:mt-4 min-h-[300px]">
+        <div className="relative z-10 mt-3.5 sm:mt-4 min-h-[290px]">
           <AnimatePresence mode="wait">
             {activeTab === "wallets" && (
               <motion.div
                 key="wallets"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
                 className="space-y-2.5 sm:space-y-3"
               >
                 {/* Total Balance Card */}
@@ -231,20 +234,20 @@ function InteractiveFinancialMockup() {
             {activeTab === "khata" && (
               <motion.div
                 key="khata"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
                 className="space-y-2.5 sm:space-y-3"
               >
                 <div className="grid grid-cols-2 gap-2 rounded-xl bg-card p-3 border border-hairline/80 shadow-2xs dark:border-white/10">
                   <div className="min-w-0">
-                    <span className="text-[11px] sm:text-xs font-semibold text-ink block truncate">Total Receivables (Lent)</span>
-                    <div className="text-base sm:text-lg font-extrabold text-money-pos truncate">₨ 22,500</div>
+                    <span className="text-[10px] sm:text-xs font-semibold text-ink-soft block">Receivables (Lent)</span>
+                    <div className="text-base sm:text-lg font-extrabold text-money-pos">₨ 22,500</div>
                   </div>
                   <div className="text-right min-w-0">
-                    <span className="text-[11px] sm:text-xs font-semibold text-ink block truncate">Total Payables (Borrowed)</span>
-                    <div className="text-base sm:text-lg font-extrabold text-money-neg truncate">₨ 4,000</div>
+                    <span className="text-[10px] sm:text-xs font-semibold text-ink-soft block">Payables (Borrowed)</span>
+                    <div className="text-base sm:text-lg font-extrabold text-money-neg">₨ 4,000</div>
                   </div>
                 </div>
 
@@ -262,7 +265,7 @@ function InteractiveFinancialMockup() {
                     </div>
                     <div className="text-right shrink-0">
                       <div className="text-xs font-extrabold text-money-pos">owes ₨ 15,000</div>
-                      <span className="text-[10px] text-ink-soft block">2 repayments made</span>
+                      <span className="text-[10px] text-ink-soft block">2 repayments</span>
                     </div>
                   </div>
 
@@ -278,7 +281,7 @@ function InteractiveFinancialMockup() {
                     </div>
                     <div className="text-right shrink-0">
                       <div className="text-xs font-extrabold text-money-neg">you owe ₨ 4,000</div>
-                      <span className="text-[10px] text-ink-soft block">Due by 1st Nov</span>
+                      <span className="text-[10px] text-ink-soft block">Due 1st Nov</span>
                     </div>
                   </div>
 
@@ -309,16 +312,16 @@ function InteractiveFinancialMockup() {
             {activeTab === "budgets" && (
               <motion.div
                 key="budgets"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
                 className="space-y-2.5 sm:space-y-3"
               >
                 <div className="rounded-xl border border-hairline/80 bg-card p-3 sm:p-3.5 shadow-2xs dark:border-white/10">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-semibold">
                     <span className="text-ink">November 2026 Budget Target</span>
-                    <span className="text-brand-emerald">₨ 20,000 Total Limit</span>
+                    <span className="text-brand-emerald">₨ 20,000 Limit</span>
                   </div>
                   <div className="mt-2 flex items-baseline justify-between text-[11px] sm:text-xs text-ink-soft">
                     <span>Spent: ₨ 13,400 (67%)</span>
@@ -378,10 +381,10 @@ function InteractiveFinancialMockup() {
             {activeTab === "savings" && (
               <motion.div
                 key="savings"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18 }}
                 className="space-y-2.5 sm:space-y-3"
               >
                 <div className="rounded-xl sm:rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3 sm:p-4 dark:border-emerald-500/20">
@@ -405,17 +408,17 @@ function InteractiveFinancialMockup() {
                   <div className="rounded-xl border border-hairline/80 bg-card p-2.5 sm:p-3 shadow-2xs dark:border-white/10 min-w-0">
                     <span className="text-[10px] sm:text-[11px] font-medium text-ink-soft block truncate">October Savings</span>
                     <div className="mt-1 text-sm sm:text-base font-extrabold text-ink truncate">₨ 30,000</div>
-                    <span className="text-[10px] text-ink-soft block truncate">21.4% of total income</span>
+                    <span className="text-[10px] text-ink-soft block truncate">21.4% of income</span>
                   </div>
                   <div className="rounded-xl border border-hairline/80 bg-card p-2.5 sm:p-3 shadow-2xs dark:border-white/10 min-w-0">
                     <span className="text-[10px] sm:text-[11px] font-medium text-ink-soft block truncate">November Savings</span>
                     <div className="mt-1 text-sm sm:text-base font-extrabold text-money-pos truncate">₨ 38,500</div>
-                    <span className="text-[10px] text-money-pos font-semibold block truncate">27.5% of total income</span>
+                    <span className="text-[10px] text-money-pos font-semibold block truncate">27.5% of income</span>
                   </div>
                 </div>
 
                 <div className="rounded-xl border border-hairline/80 bg-card p-2.5 sm:p-3 text-[11px] sm:text-xs text-ink-soft dark:border-white/10">
-                  <span className="font-semibold text-ink">Active Goal:</span> Emergency Fund (₨ 75,000 / ₨ 100,000) · 75% Completed
+                  <span className="font-semibold text-ink">Active Goal:</span> Emergency Fund (₨ 75,000 / ₨ 100,000) · 75%
                 </div>
               </motion.div>
             )}
@@ -423,8 +426,8 @@ function InteractiveFinancialMockup() {
         </div>
       </div>
 
-      {/* Floating feature pills - carefully positioned on md+ devices to prevent overflow */}
-      <div className="pointer-events-none absolute -bottom-3 -left-3 hidden md:flex items-center gap-2 rounded-2xl border border-hairline/80 bg-white/95 px-3 py-2 shadow-raised backdrop-blur-md dark:border-white/10 dark:bg-card/95 z-10">
+      {/* Floating feature pills - carefully positioned on desktop to prevent overflow */}
+      <div className="pointer-events-none absolute -bottom-3 -left-3 hidden lg:flex items-center gap-2 rounded-2xl border border-hairline/80 bg-white/95 px-3 py-2 shadow-raised backdrop-blur-md dark:border-white/10 dark:bg-card/95 z-20">
         <span className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-brand-emerald/15 text-brand-emerald-deep dark:text-emerald-300">
           <ShieldCheck className="size-4" />
         </span>
@@ -434,7 +437,7 @@ function InteractiveFinancialMockup() {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute -top-3 -right-3 hidden md:flex items-center gap-2 rounded-2xl border border-hairline/80 bg-white/95 px-3 py-2 shadow-raised backdrop-blur-md dark:border-white/10 dark:bg-card/95 z-10">
+      <div className="pointer-events-none absolute -top-3 -right-3 hidden lg:flex items-center gap-2 rounded-2xl border border-hairline/80 bg-white/95 px-3 py-2 shadow-raised backdrop-blur-md dark:border-white/10 dark:bg-card/95 z-20">
         <span className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold-deep dark:text-amber-400">
           <WifiOff className="size-4" />
         </span>
@@ -646,15 +649,15 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <div className="min-h-dvh overflow-x-clip bg-[#f8fafc] text-ink dark:bg-[#0b1320] dark:text-white">
+    <div className="min-h-dvh w-full overflow-x-hidden bg-[#f8fafc] text-ink dark:bg-[#0b1320] dark:text-white">
       {/* --------------------------------------------- Top Announcement Bar */}
       <div className="bg-gradient-to-r from-brand-emerald-deep via-[#0b1320] to-gold-deep px-3 py-1.5 text-center text-[11px] font-semibold text-white sm:text-xs">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-1.5 sm:gap-2">
           <Sparkles className="size-3.5 shrink-0 text-gold" />
-          <span className="truncate max-w-[220px] xs:max-w-none">
-            RAQAMORA 2.0 Live · Pakistan&apos;s #1 Personal Financial OS
+          <span>
+            RAQAMORA 2.0 Live · Pakistan&apos;s #1 Financial OS
           </span>
-          <span className="hidden md:inline">· Integer Paisa Precision &amp; Digital Khata</span>
+          <span className="hidden sm:inline">· Integer Paisa Precision &amp; Digital Khata</span>
           <button
             type="button"
             onClick={() => onSignIn("signup")}
@@ -747,7 +750,7 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden border-b border-hairline/80 bg-white/95 shadow-raised backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1320]/95 lg:hidden"
+              className="max-h-[calc(100dvh-4.5rem)] overflow-y-auto border-b border-hairline/80 bg-white/95 shadow-raised backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1320]/95 lg:hidden"
             >
               <div className="mx-auto max-w-7xl px-4 py-5 space-y-4">
                 {/* Mobile Navigation Links */}
@@ -813,6 +816,7 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
                     <ArrowRight className="ml-2 size-4" />
                   </Button>
                   <DemoButton
+                    label="Try Live Demo"
                     className="w-full min-h-11 rounded-xl border-hairline bg-card font-semibold text-sm shadow-2xs hover:bg-muted"
                     onDemo={(user) => {
                       closeMobileMenu();
@@ -844,12 +848,12 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
         <div className="mx-auto max-w-7xl">
           <div className="grid items-center gap-10 sm:gap-12 lg:grid-cols-2 lg:gap-16">
             <Reveal className="space-y-5 sm:space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-bold text-gold-deep dark:text-amber-300">
+              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-[11px] sm:text-xs font-bold text-gold-deep dark:text-amber-300 max-w-full">
                 <span className="flex size-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                <span className="truncate">Designed Specifically for Pakistan&apos;s Financial Reality</span>
+                <span className="leading-tight">Built for Pakistan&apos;s Financial Reality</span>
               </div>
 
-              <h1 className="text-3xl font-extrabold leading-[1.12] tracking-tight text-ink dark:text-white sm:text-5xl lg:text-6xl sm:leading-[1.08]">
+              <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight text-ink dark:text-white sm:text-5xl lg:text-6xl sm:leading-[1.08] break-words">
                 Aapka Paisa, <br />
                 <span className="bg-gradient-to-r from-brand-emerald via-emerald-600 to-gold bg-clip-text text-transparent">
                   Mukammal Hisab.
@@ -874,21 +878,22 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
                 <DemoButton
                   size="lg"
                   variant="outline"
+                  label="Try Live Demo"
                   className="w-full sm:w-auto min-h-12 justify-center rounded-xl border-hairline bg-white/90 text-sm font-bold shadow-2xs hover:bg-muted dark:border-white/10 dark:bg-card"
                   onDemo={onEnterApp}
                 />
               </div>
 
               {/* Trust Checkpoints */}
-              <div className="flex flex-wrap items-center gap-y-2 gap-x-4 sm:gap-x-6 text-xs text-ink-soft dark:text-white/60">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs text-ink-soft dark:text-white/60">
                 <span className="flex items-center gap-1.5 font-medium">
-                  <CheckCircle2 className="size-4 shrink-0 text-brand-emerald" /> 100% Free · No Card Needed
+                  <CheckCircle2 className="size-4 shrink-0 text-brand-emerald" /> 100% Free · No Card
                 </span>
                 <span className="flex items-center gap-1.5 font-medium">
                   <CheckCircle2 className="size-4 shrink-0 text-brand-emerald" /> Offline PWA Installed
                 </span>
                 <span className="flex items-center gap-1.5 font-medium">
-                  <CheckCircle2 className="size-4 shrink-0 text-brand-emerald" /> Zero Tracking / Privacy First
+                  <CheckCircle2 className="size-4 shrink-0 text-brand-emerald" /> Zero Tracking / Privacy
                 </span>
               </div>
             </Reveal>
@@ -906,19 +911,19 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 sm:gap-6 px-4 sm:px-6 md:grid-cols-4">
           <div className="text-center">
             <div className="text-xl sm:text-2xl lg:text-3xl font-black text-ink dark:text-white">₨ 150M+</div>
-            <div className="mt-1 text-[11px] sm:text-xs font-semibold text-ink-soft">PKR Transactions Reconciled</div>
+            <div className="mt-1 text-[11px] sm:text-xs font-semibold text-ink-soft">PKR Reconciled</div>
           </div>
           <div className="text-center">
             <div className="text-xl sm:text-2xl lg:text-3xl font-black text-brand-emerald">100%</div>
-            <div className="mt-1 text-[11px] sm:text-xs font-semibold text-ink-soft">Integer Paisa Precision (No Bugs)</div>
+            <div className="mt-1 text-[11px] sm:text-xs font-semibold text-ink-soft">Paisa Precision (No Bugs)</div>
           </div>
           <div className="text-center">
             <div className="text-xl sm:text-2xl lg:text-3xl font-black text-gold-deep dark:text-amber-400">0 Ads</div>
-            <div className="mt-1 text-[11px] sm:text-xs font-semibold text-ink-soft">Zero Data Selling or Tracking</div>
+            <div className="mt-1 text-[11px] sm:text-xs font-semibold text-ink-soft">Zero Tracking Or Data Selling</div>
           </div>
           <div className="text-center">
             <div className="text-xl sm:text-2xl lg:text-3xl font-black text-ink dark:text-white">Offline PWA</div>
-            <div className="mt-1 text-[11px] sm:text-xs font-semibold text-ink-soft">Load Shedding &amp; Airplane Mode</div>
+            <div className="mt-1 text-[11px] sm:text-xs font-semibold text-ink-soft">Airplane &amp; Load Shedding</div>
           </div>
         </div>
       </section>
@@ -1011,7 +1016,7 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
 
           <div className="mt-8 sm:mt-12 grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {/* Bento Card 1 - Khata Anchor */}
-            <div id="khata" className="scroll-mt-28">
+            <div id="khata" className="scroll-mt-28 h-full">
               <Reveal delay={0.05} className="h-full group rounded-2xl sm:rounded-3xl border border-hairline/80 bg-card p-5 sm:p-6 shadow-card transition-all hover:-translate-y-1 hover:shadow-raised dark:border-white/10">
                 <span className="flex size-10 sm:size-11 items-center justify-center rounded-2xl bg-brand-emerald/15 text-brand-emerald-deep dark:text-emerald-300">
                   <Users className="size-5" />
@@ -1198,11 +1203,11 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
       </section>
 
       {/* ---------------------------------------------------- Final Conversion CTA */}
-      <section className="px-4 pb-14 pt-6 sm:px-6 sm:pb-20 sm:pt-8">
+      <section className="overflow-hidden px-4 pb-14 pt-6 sm:px-6 sm:pb-20 sm:pt-8">
         <div className="mx-auto max-w-7xl">
-          <Reveal className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0b1320] via-[#101c2c] to-[#080d17] p-6 sm:p-10 md:p-16 text-center text-white shadow-raised border border-white/10">
-            <div className="pointer-events-none absolute -left-20 -top-20 size-72 rounded-full bg-brand-emerald/20 blur-3xl" />
-            <div className="pointer-events-none absolute -right-20 -bottom-20 size-72 rounded-full bg-gold/20 blur-3xl" />
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0b1320] via-[#101c2c] to-[#080d17] p-6 sm:p-10 md:p-16 text-center text-white shadow-raised border border-white/10">
+            <div className="pointer-events-none absolute -left-10 -top-10 size-56 rounded-full bg-brand-emerald/15 blur-3xl" />
+            <div className="pointer-events-none absolute -right-10 -bottom-10 size-56 rounded-full bg-gold/15 blur-3xl" />
 
             <div className="relative z-10 mx-auto max-w-2xl space-y-4 sm:space-y-5">
               <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-300 font-bold">
@@ -1226,12 +1231,13 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
                 <DemoButton
                   size="lg"
                   variant="outline"
+                  label="Try Live Demo"
                   className="w-full sm:w-auto min-h-12 justify-center rounded-xl border-white/20 bg-white/10 text-white hover:bg-white/20 text-sm font-semibold"
                   onDemo={onEnterApp}
                 />
               </div>
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
 

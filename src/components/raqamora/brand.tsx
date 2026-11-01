@@ -61,7 +61,7 @@ export function RaqamoraWordmark({
         className={cn(
           "font-semibold leading-none",
           SIZE_TEXT[size],
-          tone === "onLight" ? "text-navy" : "text-ivory",
+          tone === "onLight" ? "text-navy dark:text-white" : "text-ivory",
         )}
       >
         RAQAMORA
