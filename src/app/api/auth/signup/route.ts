@@ -2,23 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hashPassword, setSessionCookie, errorResponse, HttpError } from "@/lib/server/auth";
 import { signupSchema } from "@/lib/raqamora/validation";
-
-const DEFAULT_CATEGORIES: Array<{ name: string; kind: "INCOME" | "EXPENSE"; icon: string }> = [
-  { name: "Salary", kind: "INCOME", icon: "briefcase" },
-  { name: "Freelancing", kind: "INCOME", icon: "laptop" },
-  { name: "Business Income", kind: "INCOME", icon: "store" },
-  { name: "Other Income", kind: "INCOME", icon: "plus-circle" },
-  { name: "Food & Groceries", kind: "EXPENSE", icon: "shopping-basket" },
-  { name: "Transport", kind: "EXPENSE", icon: "car" },
-  { name: "Bills & Utilities", kind: "EXPENSE", icon: "receipt" },
-  { name: "Rent", kind: "EXPENSE", icon: "home" },
-  { name: "Shopping", kind: "EXPENSE", icon: "shopping-bag" },
-  { name: "Education", kind: "EXPENSE", icon: "graduation-cap" },
-  { name: "Health", kind: "EXPENSE", icon: "heart-pulse" },
-  { name: "Travel", kind: "EXPENSE", icon: "plane" },
-  { name: "Subscriptions", kind: "EXPENSE", icon: "tv" },
-  { name: "Other", kind: "EXPENSE", icon: "tag" },
-];
+import { DEFAULT_CATEGORIES } from "@/lib/raqamora/finance";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,7 +21,7 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         email: normalizedEmail,
         passwordHash: hashPassword(password),
-        categories: { create: DEFAULT_CATEGORIES },
+        categories: { create: DEFAULT_CATEGORIES.map((c) => ({ name: c.name, kind: c.kind, icon: c.icon })) },
       },
       select: { id: true, email: true, name: true, isDemo: true, onboarded: true, currency: true, warnThreshold: true },
     });

@@ -39,7 +39,7 @@ import {
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { ApiError, apiGet, apiSend, qs } from "@/lib/raqamora/client";
+import { ApiError, apiGet, apiSend, invalidateCache, qs } from "@/lib/raqamora/client";
 import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { formatPKR, formatRupees } from "@/lib/raqamora/money";
 import { parseBankSms, type ParsedSmsTransaction } from "@/lib/raqamora/sms-parser";
@@ -325,9 +325,10 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
     if (!hasCache && accounts.length === 0) {
       setLoadState("loading");
     }
+    const catOpts = cachedCategories && cachedCategories.length > 0 ? undefined : { force: true };
     Promise.all([
       apiGet<{ accounts: AccountWithBalance[] }>("/api/accounts"),
-      apiGet<{ categories: CategoryRow[] }>("/api/categories"),
+      apiGet<{ categories: CategoryRow[] }>("/api/categories", catOpts),
       apiGet<{ people: PersonRow[] }>("/api/people"),
     ])
       .then(([a, c, p]) => {
@@ -343,10 +344,10 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
         }
 
         // Smart default: Auto-select first matching category
-        const initialKind = defaultType === "INCOME" ? "INCOME" : "EXPENSE";
+        const initialKind = (getValues("type") || defaultType) === "INCOME" ? "INCOME" : "EXPENSE";
         const firstCat = activeCategories.find((cat) => cat.kind === initialKind);
         if (!getValues("categoryId") && firstCat) {
-          setValue("categoryId", firstCat.id);
+          setValue("categoryId", firstCat.id, { shouldValidate: true });
         }
 
         setLoadState("ready");
@@ -355,11 +356,37 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
         if (guard(err)) return;
         if (accounts.length === 0) setLoadState("error");
       });
-  }, [guard, defaultType, getValues, setValue, hasCache, accounts.length]);
+  }, [guard, defaultType, getValues, setValue, hasCache, accounts.length, cachedCategories]);
 
   React.useEffect(() => {
     loadBase();
   }, [loadBase]);
+
+  React.useEffect(() => {
+    const handleRefUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ path?: string }>).detail;
+      if (!detail?.path || detail.path.includes("/categories") || detail.path.includes("/accounts")) {
+        loadBase();
+      }
+    };
+    window.addEventListener("raqamora:reference-data-updated", handleRefUpdated);
+    return () => {
+      window.removeEventListener("raqamora:reference-data-updated", handleRefUpdated);
+    };
+  }, [loadBase]);
+
+  // Keep category aligned with current type when categories load or type changes
+  React.useEffect(() => {
+    if (!req.needsCategory || categories.length === 0) return;
+    const wantKind = type === "INCOME" ? "INCOME" : "EXPENSE";
+    const currentCat = categories.find((c) => c.id === watchedCategoryId);
+    if (!currentCat || currentCat.kind !== wantKind) {
+      const match = categories.find((c) => c.kind === wantKind);
+      if (match) {
+        setValue("categoryId", match.id, { shouldValidate: true });
+      }
+    }
+  }, [categories, req.needsCategory, type, watchedCategoryId, setValue]);
 
   const loadDebts = React.useCallback(
     (personId: string, direction: "RECEIVABLE" | "PAYABLE") => {
@@ -967,38 +994,56 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
             )}
           </div>
 
-          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1 px-0.5">
-            {visibleChips.map((c) => {
-              const active = watchedCategoryId === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setValue("categoryId", c.id, { shouldValidate: true })}
-                  className={cn(
-                    "flex flex-col items-center gap-1 shrink-0 p-1.5 rounded-2xl transition-all active:scale-95 min-w-[62px]",
-                    active
-                      ? "bg-brand-emerald/10 text-brand-emerald-deep font-bold ring-2 ring-brand-emerald/50 dark:text-[#53c6ac]"
-                      : "text-ink-soft hover:bg-muted/50 hover:text-ink",
-                  )}
-                >
-                  <div
+          {kindCategories.length === 0 ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-hairline/80 bg-muted/40 p-2.5">
+              <span className="text-xs text-ink-soft">
+                {categoryKind === "INCOME" ? "Aamdani" : "Kharcha"} ki koi category nahi mili.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  invalidateCache("/api/categories");
+                  loadBase();
+                }}
+                className="text-xs font-semibold text-brand-emerald hover:underline shrink-0"
+              >
+                Categories Refresh Karein
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1 px-0.5">
+              {visibleChips.map((c) => {
+                const active = watchedCategoryId === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setValue("categoryId", c.id, { shouldValidate: true })}
                     className={cn(
-                      "size-10 rounded-full flex items-center justify-center transition-transform",
+                      "flex flex-col items-center gap-1 shrink-0 p-1.5 rounded-2xl transition-all active:scale-95 min-w-[62px]",
                       active
-                        ? "bg-brand-emerald text-white shadow-sm scale-105"
-                        : "bg-muted/80 text-ink-soft",
+                        ? "bg-brand-emerald/10 text-brand-emerald-deep font-bold ring-2 ring-brand-emerald/50 dark:text-[#53c6ac]"
+                        : "text-ink-soft hover:bg-muted/50 hover:text-ink",
                     )}
                   >
-                    <AppIcon name={c.icon} className="size-4" />
-                  </div>
-                  <span className="text-[10.5px] truncate max-w-[58px] leading-tight">
-                    {c.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    <div
+                      className={cn(
+                        "size-10 rounded-full flex items-center justify-center transition-transform",
+                        active
+                          ? "bg-brand-emerald text-white shadow-sm scale-105"
+                          : "bg-muted/80 text-ink-soft",
+                      )}
+                    >
+                      <AppIcon name={c.icon} className="size-4" />
+                    </div>
+                    <span className="text-[10.5px] truncate max-w-[58px] leading-tight">
+                      {c.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {errors.categoryId && (
             <p className="text-[11px] font-semibold text-danger-brand" role="alert">

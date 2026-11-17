@@ -66,14 +66,23 @@ export async function apiGet<T>(path: string, options?: ApiGetOptions): Promise<
     path.includes("/categories") || path.includes("/accounts") || path.includes("/people");
   const ttl = options?.ttl ?? (isReference ? 60_000 : 15_000);
 
+  // If reference data is cached but empty (e.g. right after a reset), do not return empty cache
+  const isEmptyReference =
+    path.includes("/categories") &&
+    Array.isArray((cached as any)?.categories) &&
+    (cached as any).categories.length === 0;
+
   // 3. Stale-While-Revalidate: If we have cached data and not explicitly forcing, return cached data INSTANTLY (0ms)
   // and trigger a silent background revalidation if needed
-  if (cached !== null && !options?.force) {
+  if (cached !== null && !options?.force && !isEmptyReference) {
     // Launch non-blocking background revalidation
     const bgPromise = fetch(path, { credentials: "same-origin" })
       .then((res) => handle<T>(res))
       .then((fresh) => {
         setCachedGet(path, fresh);
+        if (typeof window !== "undefined" && isReference) {
+          window.dispatchEvent(new CustomEvent("raqamora:reference-data-updated", { detail: { path } }));
+        }
         return fresh;
       })
       .catch(() => cached);

@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireUser, errorResponse } from "@/lib/server/auth";
+import { DEFAULT_CATEGORIES } from "@/lib/raqamora/finance";
 
 /**
  * POST /api/settings/reset — wipe ALL of the user's financial data while
  * keeping the login session. FK-safe order: transactions first (they restrict
  * accounts/debts), then contributions → goals → debts → budgets → recurring →
  * notifications → people → categories → accounts.
+ * Then re-seeds default standard categories so the user can immediately add transactions.
  */
 export async function POST() {
   try {
@@ -29,6 +31,14 @@ export async function POST() {
       db.category.deleteMany({ where: { userId: session.id } }),
       db.account.deleteMany({ where: { userId: session.id } }),
       db.user.update({ where: { id: session.id }, data: { isDemo: false } }),
+      db.category.createMany({
+        data: DEFAULT_CATEGORIES.map((c) => ({
+          userId: session.id,
+          name: c.name,
+          kind: c.kind,
+          icon: c.icon,
+        })),
+      }),
     ]);
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -42,6 +42,27 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   CUSTOM: "Custom",
 };
 
+export const DEFAULT_CATEGORIES: Array<{
+  name: string;
+  kind: "INCOME" | "EXPENSE";
+  icon: string;
+}> = [
+  { name: "Salary", kind: "INCOME", icon: "briefcase" },
+  { name: "Freelancing", kind: "INCOME", icon: "laptop" },
+  { name: "Business Income", kind: "INCOME", icon: "store" },
+  { name: "Other Income", kind: "INCOME", icon: "plus-circle" },
+  { name: "Food & Groceries", kind: "EXPENSE", icon: "shopping-basket" },
+  { name: "Transport", kind: "EXPENSE", icon: "car" },
+  { name: "Bills & Utilities", kind: "EXPENSE", icon: "receipt" },
+  { name: "Rent", kind: "EXPENSE", icon: "home" },
+  { name: "Shopping", kind: "EXPENSE", icon: "shopping-bag" },
+  { name: "Education", kind: "EXPENSE", icon: "graduation-cap" },
+  { name: "Health", kind: "EXPENSE", icon: "heart-pulse" },
+  { name: "Travel", kind: "EXPENSE", icon: "plane" },
+  { name: "Subscriptions", kind: "EXPENSE", icon: "tv" },
+  { name: "Other", kind: "EXPENSE", icon: "tag" },
+];
+
 /** Which fields are required per transaction type (for dynamic form). */
 export function txnFieldRequirements(type: TxnType) {
   return {
