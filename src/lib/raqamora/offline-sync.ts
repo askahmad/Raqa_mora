@@ -89,15 +89,45 @@ export function setCachedUser(user: SessionUser | null): void {
 const memoryCache = new Map<string, { data: unknown; cachedAt: number }>();
 
 export function invalidateCache(pattern?: string | RegExp): void {
+  // 1. Invalidate L1 memory cache
   if (!pattern) {
     memoryCache.clear();
-    return;
-  }
-  for (const key of Array.from(memoryCache.keys())) {
-    if (typeof pattern === "string" ? key.includes(pattern) : pattern.test(key)) {
-      memoryCache.delete(key);
+  } else {
+    for (const key of Array.from(memoryCache.keys())) {
+      if (typeof pattern === "string" ? key.includes(pattern) : pattern.test(key)) {
+        memoryCache.delete(key);
+      }
     }
   }
+
+  // 2. Invalidate L2 localStorage cache entries
+  if (typeof window !== "undefined") {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(CACHE_PREFIX)) {
+          const path = key.slice(CACHE_PREFIX.length);
+          if (!pattern) {
+            keysToRemove.push(key);
+          } else if (typeof pattern === "string" ? path.includes(pattern) : pattern.test(path)) {
+            keysToRemove.push(key);
+          }
+        }
+      }
+      for (const k of keysToRemove) {
+        localStorage.removeItem(k);
+      }
+    } catch {
+      /* ignore storage access restrictions */
+    }
+  }
+}
+
+/** Complete purge of all cached read data and pending offline mutations. */
+export function clearAllLocalData(): void {
+  invalidateCache();
+  clearOfflineQueue();
 }
 
 export function setCachedGet(path: string, data: unknown): void {

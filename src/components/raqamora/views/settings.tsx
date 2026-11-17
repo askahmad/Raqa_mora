@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { ApiError, apiGet, apiSend } from "@/lib/raqamora/client";
+import { ApiError, apiGet, apiSend, clearAllLocalData } from "@/lib/raqamora/client";
 import type { SessionUser } from "@/lib/raqamora/types";
 import { useApp } from "@/components/raqamora/app-root";
 import { ConfirmDialog, PageHeader, SectionCard, Spinner } from "@/components/raqamora/kit";
@@ -201,12 +201,16 @@ export default function SettingsView({ user }: ViewProps) {
     setErasing(true);
     try {
       await apiSend("/api/settings/reset", "POST");
+      clearAllLocalData();
       setUser({ ...user, isDemo: false });
       await refreshUnread();
       window.dispatchEvent(new Event("raqamora:txn-changed"));
       toast.success("All financial data erased — fresh start");
       setEraseOpen(false);
       setEraseText("");
+      setTimeout(() => {
+        window.location.reload();
+      }, 400);
     } catch (err) {
       if (isUnauthorized(err)) {
         handleUnauthorized();

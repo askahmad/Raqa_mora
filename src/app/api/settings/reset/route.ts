@@ -11,9 +11,15 @@ import { requireUser, errorResponse } from "@/lib/server/auth";
 export async function POST() {
   try {
     const session = await requireUser();
+    const goals = await db.savingsGoal.findMany({
+      where: { userId: session.id },
+      select: { id: true },
+    });
+    const goalIds = goals.map((g) => g.id);
+
     await db.$transaction([
       db.transaction.deleteMany({ where: { userId: session.id } }),
-      db.contribution.deleteMany({ where: { goal: { userId: session.id } } }),
+      db.contribution.deleteMany({ where: { goalId: { in: goalIds } } }),
       db.savingsGoal.deleteMany({ where: { userId: session.id } }),
       db.debt.deleteMany({ where: { userId: session.id } }),
       db.budget.deleteMany({ where: { userId: session.id } }),

@@ -103,11 +103,11 @@ const SCROLLBAR =
 
 type RangeKey = "today" | "week" | "month" | "year" | "custom";
 
-const RANGE_OPTIONS: Array<{ key: Exclude<RangeKey, "custom">; label: string }> = [
-  { key: "today", label: "Today" },
-  { key: "week", label: "This week" },
-  { key: "month", label: "This month" },
-  { key: "year", label: "This year" },
+const RANGE_OPTIONS: Array<{ key: Exclude<RangeKey, "custom">; label: string; shortLabel: string }> = [
+  { key: "today", label: "Today", shortLabel: "Today" },
+  { key: "week", label: "This week", shortLabel: "Week" },
+  { key: "month", label: "This month", shortLabel: "Month" },
+  { key: "year", label: "This year", shortLabel: "Year" },
 ];
 
 /* ----------------------------------------------------------------- helpers */
@@ -602,11 +602,11 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+        <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full pb-0.5">
           <div
             role="group"
             aria-label="Period"
-            className="flex gap-1 rounded-2xl border border-hairline/80 bg-muted/40 p-1 shadow-2xs"
+            className="flex shrink-0 gap-0.5 sm:gap-1 rounded-2xl border border-hairline/80 bg-muted/40 p-1 shadow-2xs"
           >
             {RANGE_OPTIONS.map((opt) => (
               <button
@@ -615,7 +615,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                 aria-pressed={rangeKey === opt.key}
                 onClick={() => setRangeKey(opt.key)}
                 className={cn(
-                  "relative min-h-8 shrink-0 rounded-xl px-3 text-[12px] font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none",
+                  "relative min-h-8 shrink-0 rounded-xl px-2 sm:px-3 text-[11px] sm:text-[12px] font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none",
                   rangeKey === opt.key ? "text-brand-emerald font-bold" : "text-slate-500 hover:text-slate-900",
                 )}
               >
@@ -626,7 +626,10 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                <span className="relative z-10">{opt.label}</span>
+                <span className="relative z-10 whitespace-nowrap">
+                  <span className="sm:hidden">{opt.shortLabel}</span>
+                  <span className="hidden sm:inline">{opt.label}</span>
+                </span>
               </button>
             ))}
           </div>
@@ -637,7 +640,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "min-h-8 h-8 rounded-xl px-2.5 text-xs active:scale-95 transition-transform",
+                  "min-h-8 h-8 shrink-0 rounded-xl px-2 sm:px-2.5 text-xs active:scale-95 transition-transform",
                   rangeKey === "custom" && "border-brand-emerald/50 text-brand-emerald-deep font-semibold",
                 )}
                 onClick={() => {
@@ -645,7 +648,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                   else openCustomDraft();
                 }}
               >
-                <CalendarDays className="size-3.5 mr-1" aria-hidden />
+                <CalendarDays className="size-3.5 mr-1 shrink-0" aria-hidden />
                 Custom
               </Button>
             </PopoverTrigger>

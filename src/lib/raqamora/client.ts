@@ -11,7 +11,10 @@ import {
   getCachedGet,
   setCachedGet,
   invalidateCache,
+  clearAllLocalData,
 } from "@/lib/raqamora/offline-sync";
+
+export { clearAllLocalData, invalidateCache };
 
 export class ApiError extends Error {
   status: number;
@@ -144,6 +147,10 @@ export async function apiSend<T>(
 }
 
 function invalidateCacheByPath(path: string) {
+  if (path.includes("/settings/reset") || path.includes("/demo/seed")) {
+    clearAllLocalData();
+    return;
+  }
   if (path.includes("/transactions")) {
     invalidateCache("/api/transactions");
     invalidateCache("/api/dashboard");
@@ -152,6 +159,7 @@ function invalidateCacheByPath(path: string) {
   } else if (path.includes("/accounts")) {
     invalidateCache("/api/accounts");
     invalidateCache("/api/dashboard");
+    invalidateCache("/api/reports");
   } else if (path.includes("/debts")) {
     invalidateCache("/api/debts");
     invalidateCache("/api/dashboard");
@@ -165,6 +173,11 @@ function invalidateCacheByPath(path: string) {
   } else if (path.includes("/people")) {
     invalidateCache("/api/people");
     invalidateCache("/api/debts");
+  } else if (path.includes("/recurring")) {
+    invalidateCache("/api/recurring");
+    invalidateCache("/api/dashboard");
+  } else if (path.includes("/notifications")) {
+    invalidateCache("/api/notifications");
   }
 }
 
