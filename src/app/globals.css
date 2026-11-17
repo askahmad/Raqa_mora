@@ -147,13 +147,20 @@
   html {
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    height: auto;
+    min-height: 100%;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-app-sans);
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100%;
+    overflow-y: visible !important;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pinch-zoom;
   }
   button, a, input, select, textarea {
     touch-action: manipulation;
