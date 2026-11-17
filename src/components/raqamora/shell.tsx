@@ -155,15 +155,15 @@ export function AppShell({
         aria-current={active ? "page" : undefined}
         title={opts.collapsed ? item.label : undefined}
         className={cn(
-          "group relative flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-[13px] font-medium outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-emerald-400 active:scale-[0.98]",
-          opts.collapsed ? "justify-center px-0" : "px-3",
+          "group relative flex min-h-[34px] w-full items-center gap-2 rounded-lg px-2.5 text-[12.5px] font-medium outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-emerald-400 active:scale-[0.98]",
+          opts.collapsed ? "justify-center px-0 min-h-9" : "px-2.5",
           active ? "text-white font-semibold" : "text-slate-300/80 hover:bg-white/5 hover:text-white",
         )}
       >
         {active && (
           <motion.div
             layoutId="activeSidebarIndicator"
-            className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-md shadow-emerald-950/40"
+            className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-md shadow-emerald-950/40"
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
           />
         )}
@@ -192,7 +192,7 @@ export function AppShell({
   };
 
   const userBlock = (opts: { collapsed?: boolean } = {}) => (
-    <div className="border-t border-white/10 p-3">
+    <div className="border-t border-white/10 p-2 sm:p-2.5">
       {opts.collapsed ? (
         <Button
           variant="ghost"
@@ -200,27 +200,27 @@ export function AppShell({
           onClick={onLogout}
           aria-label="Sign out"
           title="Sign out"
-          className="size-10 w-full rounded-xl text-ivory/60 hover:bg-white/10 hover:text-ivory"
+          className="size-9 w-full rounded-lg text-ivory/60 hover:bg-white/10 hover:text-ivory"
         >
           <LogOut className="size-4" aria-hidden />
         </Button>
       ) : (
-        <div className="flex items-center gap-2.5 rounded-xl p-1.5">
-          <Avatar className="size-9 border border-white/10 shrink-0">
-            <AvatarFallback className="bg-gold/20 text-[11px] font-bold text-gold">
+        <div className="flex items-center gap-2 rounded-lg p-1">
+          <Avatar className="size-8 border border-white/10 shrink-0">
+            <AvatarFallback className="bg-gold/20 text-[10px] font-bold text-gold">
               {initials(user.name)}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="truncate text-[13px] font-semibold text-ivory">{user.name}</span>
+              <span className="truncate text-xs font-semibold text-ivory">{user.name}</span>
               {user.isDemo ? (
-                <Badge className="border-gold/40 bg-gold/15 px-1 py-0 text-[8.5px] font-bold uppercase text-gold">
+                <Badge className="border-gold/40 bg-gold/15 px-1 py-0 text-[8px] font-bold uppercase text-gold">
                   Demo
                 </Badge>
               ) : null}
             </div>
-            <p className="truncate text-[11px] text-ivory/50">{user.email}</p>
+            <p className="truncate text-[10.5px] text-ivory/50">{user.email}</p>
           </div>
           <Button
             variant="ghost"
@@ -228,9 +228,9 @@ export function AppShell({
             onClick={onLogout}
             aria-label="Sign out"
             title="Sign out"
-            className="size-8 rounded-lg text-ivory/60 hover:bg-white/10 hover:text-ivory"
+            className="size-7 rounded-lg text-ivory/60 hover:bg-white/10 hover:text-ivory"
           >
-            <LogOut className="size-4" aria-hidden />
+            <LogOut className="size-3.5" aria-hidden />
           </Button>
         </div>
       )}
@@ -242,18 +242,18 @@ export function AppShell({
       {/* ---------------- Desktop Sidebar ---------------- */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 hidden flex-col bg-navy text-ivory transition-[width] duration-200 ease-out md:flex shadow-xl",
+          "fixed inset-y-0 left-0 z-40 hidden flex-col bg-navy text-ivory transition-[width] duration-200 ease-out md:flex shadow-xl select-none",
         )}
-        style={{ width: collapsed ? 64 : 240 }}
+        style={{ width: collapsed ? 64 : 224 }}
       >
         <div
           className={cn(
-            "flex h-16 items-center border-b border-white/10",
-            collapsed ? "justify-center px-2" : "justify-between pl-4 pr-3",
+            "flex h-13 sm:h-14 items-center border-b border-white/10 shrink-0",
+            collapsed ? "justify-center px-2" : "justify-between pl-3.5 pr-2.5",
           )}
         >
           {collapsed ? (
-            <Monogram className="size-8" />
+            <Monogram className="size-7" />
           ) : (
             <>
               <RaqamoraWordmark size="sm" tone="onDark" />
@@ -272,7 +272,7 @@ export function AppShell({
         </div>
 
         {collapsed ? (
-          <div className="flex justify-center pt-2">
+          <div className="flex justify-center pt-2 shrink-0">
             <Button
               variant="ghost"
               size="icon"
@@ -286,11 +286,11 @@ export function AppShell({
           </div>
         ) : null}
 
-        <nav aria-label="Primary" className="flex-1 space-y-4 overflow-y-auto p-3">
+        <nav aria-label="Primary" className="flex-1 space-y-2 overflow-y-auto no-scrollbar p-2">
           {NAV_SECTIONS.map((sec, idx) => (
-            <div key={idx} className="space-y-1">
+            <div key={idx} className="space-y-0.5">
               {!collapsed && sec.title ? (
-                <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-ivory/40">
+                <p className="px-2 pt-1 pb-0.5 text-[9px] font-bold uppercase tracking-wider text-ivory/40">
                   {sec.title}
                 </p>
               ) : null}
@@ -306,7 +306,7 @@ export function AppShell({
       <div
         className={cn(
           "flex min-h-dvh flex-col transition-[padding] duration-200 ease-out",
-          collapsed ? "md:pl-16" : "md:pl-[240px]",
+          collapsed ? "md:pl-16" : "md:pl-[224px]",
         )}
       >
         {/* Topbar */}
@@ -538,7 +538,7 @@ function MobileNavSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[88dvh] overflow-y-auto overscroll-contain rounded-t-[32px] border-t border-hairline bg-card p-0 shadow-2xl text-ink"
+        className="max-h-[88dvh] overflow-y-auto no-scrollbar overscroll-contain rounded-t-[32px] border-t border-hairline bg-card p-0 shadow-2xl text-ink"
       >
         <SheetTitle className="sr-only">All Sections</SheetTitle>
         <SheetDescription className="sr-only">Navigate through all RAQAMORA modules</SheetDescription>

@@ -186,13 +186,17 @@
     opacity: 0.9;
   }
   /* Hide scrollbar for Chrome, Safari and Opera */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  .no-scrollbar::-webkit-scrollbar,
+  aside nav::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
   /* Hide scrollbar for IE, Edge and Firefox */
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  .no-scrollbar,
+  aside nav {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
   }
 
   /* ---- Magic UI & Aceternity UI Motion & Glow Primitives ---- */
