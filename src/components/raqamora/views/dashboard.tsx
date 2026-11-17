@@ -602,11 +602,11 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
           </p>
         </div>
 
-        <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full pb-0.5">
+        <div className="w-full sm:w-auto overflow-x-auto no-scrollbar py-0.5">
           <div
             role="group"
             aria-label="Period"
-            className="flex shrink-0 gap-0.5 sm:gap-1 rounded-2xl border border-hairline/80 bg-muted/40 p-1 shadow-2xs"
+            className="grid grid-cols-5 sm:flex sm:items-center gap-0.5 sm:gap-1 rounded-2xl border border-hairline/80 bg-muted/40 p-1 shadow-2xs w-full sm:w-auto"
           >
             {RANGE_OPTIONS.map((opt) => (
               <button
@@ -615,7 +615,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                 aria-pressed={rangeKey === opt.key}
                 onClick={() => setRangeKey(opt.key)}
                 className={cn(
-                  "relative min-h-8 shrink-0 rounded-xl px-2 sm:px-3 text-[11px] sm:text-[12px] font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none",
+                  "relative min-h-8 sm:min-h-8.5 rounded-xl px-1 sm:px-3 text-[11px] sm:text-[12px] font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none flex items-center justify-center text-center",
                   rangeKey === opt.key ? "text-brand-emerald font-bold" : "text-slate-500 hover:text-slate-900",
                 )}
               >
@@ -632,59 +632,68 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                 </span>
               </button>
             ))}
-          </div>
 
-          <Popover open={customOpen} onOpenChange={setCustomOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "min-h-8 h-8 shrink-0 rounded-xl px-2 sm:px-2.5 text-xs active:scale-95 transition-transform",
-                  rangeKey === "custom" && "border-brand-emerald/50 text-brand-emerald-deep font-semibold",
-                )}
-                onClick={() => {
-                  if (customApplied) setRangeKey("custom");
-                  else openCustomDraft();
-                }}
-              >
-                <CalendarDays className="size-3.5 mr-1 shrink-0" aria-hidden />
-                Custom
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 rounded-2xl">
-              <div className="grid gap-3">
-                <p className="text-sm font-semibold text-ink">Custom range</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="rq-dash-from">From</Label>
-                    <Input
-                      id="rq-dash-from"
-                      type="date"
-                      value={customFrom}
-                      max={customTo || undefined}
-                      onChange={(e) => setCustomFrom(e.target.value)}
-                      className="rounded-xl"
+            <Popover open={customOpen} onOpenChange={setCustomOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-pressed={rangeKey === "custom"}
+                  className={cn(
+                    "relative min-h-8 sm:min-h-8.5 rounded-xl px-1 sm:px-2.5 text-[11px] sm:text-[12px] font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none flex items-center justify-center text-center",
+                    rangeKey === "custom" ? "text-brand-emerald font-bold" : "text-slate-500 hover:text-slate-900",
+                  )}
+                  onClick={() => {
+                    if (customApplied) setRangeKey("custom");
+                    else openCustomDraft();
+                  }}
+                >
+                  {rangeKey === "custom" && (
+                    <motion.div
+                      layoutId="activePeriodIndicator"
+                      className="absolute inset-0 rounded-xl bg-card shadow-xs border border-hairline/60"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
+                  )}
+                  <span className="relative z-10 flex items-center justify-center gap-1 whitespace-nowrap">
+                    <CalendarDays className="size-3 shrink-0" aria-hidden />
+                    <span>Custom</span>
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 rounded-2xl">
+                <div className="grid gap-3">
+                  <p className="text-sm font-semibold text-ink">Custom range</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="rq-dash-from">From</Label>
+                      <Input
+                        id="rq-dash-from"
+                        type="date"
+                        value={customFrom}
+                        max={customTo || undefined}
+                        onChange={(e) => setCustomFrom(e.target.value)}
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="rq-dash-to">To</Label>
+                      <Input
+                        id="rq-dash-to"
+                        type="date"
+                        value={customTo}
+                        min={customFrom || undefined}
+                        onChange={(e) => setCustomTo(e.target.value)}
+                        className="rounded-xl"
+                      />
+                    </div>
                   </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="rq-dash-to">To</Label>
-                    <Input
-                      id="rq-dash-to"
-                      type="date"
-                      value={customTo}
-                      min={customFrom || undefined}
-                      onChange={(e) => setCustomTo(e.target.value)}
-                      className="rounded-xl"
-                    />
-                  </div>
+                  <Button size="sm" className="min-h-9 rounded-xl" onClick={applyCustom}>
+                    Apply range
+                  </Button>
                 </div>
-                <Button size="sm" className="min-h-9 rounded-xl" onClick={applyCustom}>
-                  Apply range
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 
