@@ -649,7 +649,7 @@ export function Landing({ onEnterApp, onSignIn }: LandingProps) {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <div className="min-h-dvh w-full overflow-x-hidden bg-[#f8fafc] text-ink dark:bg-[#0b1320] dark:text-white">
+    <div className="min-h-dvh w-full overflow-x-clip bg-[#f8fafc] text-ink dark:bg-[#0b1320] dark:text-white">
       {/* --------------------------------------------- Top Announcement Bar */}
       <div className="bg-gradient-to-r from-brand-emerald-deep via-[#0b1320] to-gold-deep px-3 py-1.5 text-center text-[11px] font-semibold text-white sm:text-xs">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-1.5 sm:gap-2">
