@@ -10,15 +10,18 @@ import {
   Download,
   FlaskConical,
   Info,
+  Lock,
   LogOut,
   Save,
   ShieldAlert,
+  ShieldCheck,
   Smartphone,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ApiError, apiGet, apiSend, clearAllLocalData } from "@/lib/raqamora/client";
+import { isPinLockEnabled, setPinLock, removePinLock } from "@/components/raqamora/pin-lock";
 import type { SessionUser } from "@/lib/raqamora/types";
 import { useApp } from "@/components/raqamora/app-root";
 import { ConfirmDialog, PageHeader, SectionCard, Spinner } from "@/components/raqamora/kit";
@@ -113,6 +116,35 @@ export default function SettingsView({ user }: ViewProps) {
   const [eraseOpen, setEraseOpen] = React.useState(false);
   const [eraseText, setEraseText] = React.useState("");
   const [erasing, setErasing] = React.useState(false);
+
+  /* --- Privacy PIN Lock --- */
+  const [pinEnabled, setPinEnabled] = React.useState(() => isPinLockEnabled());
+  const [pinModalOpen, setPinModalOpen] = React.useState(false);
+  const [newPin, setNewPin] = React.useState("");
+  const [confirmPin, setConfirmPin] = React.useState("");
+
+  function handleSavePin() {
+    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+      toast.error("PIN sirf 4 digits ka hona chahiye (e.g. 1234).");
+      return;
+    }
+    if (newPin !== confirmPin) {
+      toast.error("Dono PIN match nahi kar rahe.");
+      return;
+    }
+    setPinLock(newPin);
+    setPinEnabled(true);
+    setPinModalOpen(false);
+    setNewPin("");
+    setConfirmPin("");
+    toast.success("4-Digit PIN Lock kamyabi se set ho gaya!");
+  }
+
+  function handleDisablePin() {
+    removePinLock();
+    setPinEnabled(false);
+    toast.success("PIN lock disable kar dia gaya.");
+  }
 
   /* --- Session --- */
   const [signingOut, setSigningOut] = React.useState(false);
@@ -319,6 +351,43 @@ export default function SettingsView({ user }: ViewProps) {
         </div>
       </SectionCard>
 
+      {/* ------------------------------------------- Privacy & Security */}
+      <SectionCard title="Privacy & Security" subtitle="Protect your financial records with a 4-digit PIN.">
+        <div className="space-y-2.5">
+          <SettingsRow
+            icon={Lock}
+            title="4-Digit App Security PIN"
+            description={
+              pinEnabled
+                ? "PIN Lock ACTIVE hai. App open hone par 4-digit code manga jayega."
+                : "Apne khata aur bank balance ko mehfooz karne ke liye 4-digit PIN set karein."
+            }
+            action={
+              pinEnabled ? (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setPinModalOpen(true)}>
+                    Change PIN
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDisablePin}
+                    className="border-danger-brand/40 text-danger-brand hover:bg-danger-brand/10 hover:text-danger-brand"
+                  >
+                    Disable
+                  </Button>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setPinModalOpen(true)}>
+                  <Lock className="size-4 mr-1 text-brand-emerald" />
+                  Enable PIN
+                </Button>
+              )
+            }
+          />
+        </div>
+      </SectionCard>
+
       {/* ---------------------------------------------------- Danger zone */}
       <section
         className="rounded-xl border border-danger-brand/30 bg-danger-brand/[0.03] p-4 sm:p-5"
@@ -469,6 +538,57 @@ export default function SettingsView({ user }: ViewProps) {
             <Button variant="destructive" disabled={erasing || eraseText !== "DELETE"} onClick={() => void eraseAll()}>
               {erasing ? <Spinner className="size-4 text-current" /> : null}
               Erase everything
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PIN Lock Setup Dialog */}
+      <Dialog open={pinModalOpen} onOpenChange={setPinModalOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="size-5 text-brand-emerald" />
+              {pinEnabled ? "Change Security PIN" : "Set 4-Digit Security PIN"}
+            </DialogTitle>
+            <DialogDescription>
+              4-digit security code darj karein taake app open hone par privacy mehfooz rahe.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label htmlFor="set-new-pin">4-Digit PIN</Label>
+              <Input
+                id="set-new-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="••••"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
+                className="tracking-widest text-center text-lg font-bold"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="confirm-new-pin">Confirm PIN</Label>
+              <Input
+                id="confirm-new-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="••••"
+                value={confirmPin}
+                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+                className="tracking-widest text-center text-lg font-bold"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" onClick={() => setPinModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSavePin} disabled={newPin.length !== 4 || confirmPin.length !== 4}>
+              Save PIN
             </Button>
           </DialogFooter>
         </DialogContent>

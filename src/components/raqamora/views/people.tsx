@@ -19,12 +19,14 @@ import {
   Download,
   Ellipsis,
   HandCoins,
+  MessageSquare,
   Pencil,
   Phone,
   Plus,
   Printer,
   ReceiptText,
   Search,
+  Share2,
   Trash2,
   Users,
 } from "lucide-react";
@@ -355,8 +357,30 @@ function AccountSelect({
 
 /* --------------------------------------------------------------- DebtCard */
 
+export function sendWhatsAppDebtReminder(debt: DebtWithOutstanding, phone?: string | null) {
+  const isRecv = debt.direction === "RECEIVABLE";
+  const amountStr = formatPKR(debt.outstanding);
+  const dueStr = debt.dueDate ? ` (Wapsi ki tareekh: ${debt.dueDate.slice(0, 10)})` : "";
+  const msg = isRecv
+    ? `Assalam-o-Alaikum ${debt.personName},\nYeh RAQAMORA ledger reminder hai: Aap ki taraf ${amountStr} ka hisab pending hai${dueStr}.\nBaraye meherbani fursat milte hi check kar lijiye ga. Shukriya!`
+    : `Assalam-o-Alaikum ${debt.personName},\nYeh RAQAMORA ledger confirmation hai: Meri taraf aapka ${amountStr} baqi hai${dueStr}.\nJald adaigi kar di jayegi. Shukriya!`;
+
+  const cleanPhone = phone ? phone.replace(/\D/g, "") : "";
+  const formattedPhone = cleanPhone.startsWith("03")
+    ? `92${cleanPhone.slice(1)}`
+    : cleanPhone;
+
+  const url = formattedPhone
+    ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`
+    : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+
+  window.open(url, "_blank");
+  toast.success(`WhatsApp reminder opened for ${debt.personName}`);
+}
+
 export function DebtCard({
   debt,
+  personPhone,
   onRepay,
   onEdit,
   onDelete,
@@ -368,6 +392,7 @@ export function DebtCard({
   className,
 }: {
   debt: DebtWithOutstanding;
+  personPhone?: string | null;
   onRepay: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -403,6 +428,19 @@ export function DebtCard({
           {settled ? <SettledChip /> : <DueBadge dueDate={debt.dueDate} />}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          {!settled && debt.outstanding > 0 && isReceivable ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="min-h-8 border-[#25D366]/40 text-[#128C7E] hover:bg-[#25D366]/10 dark:border-[#25D366]/40 dark:text-[#25D366] dark:hover:bg-[#25D366]/20"
+              onClick={() => sendWhatsAppDebtReminder(debt, personPhone)}
+              title="Send WhatsApp reminder"
+            >
+              <MessageSquare className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </Button>
+          ) : null}
           {!settled && debt.outstanding > 0 ? (
             <Button
               type="button"
@@ -422,6 +460,12 @@ export function DebtCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
+              {!settled && debt.outstanding > 0 ? (
+                <DropdownMenuItem onClick={() => sendWhatsAppDebtReminder(debt, personPhone)}>
+                  <MessageSquare className="size-3.5 text-[#25D366]" aria-hidden />
+                  WhatsApp reminder
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil className="size-3.5" aria-hidden />
                 Edit note / due date
@@ -1685,6 +1729,7 @@ function PersonDetail({
               <DebtCard
                 key={d.id}
                 debt={d}
+                personPhone={person.phone}
                 expanded={expandedDebt === d.id}
                 repayments={repaymentCache[d.id] ?? null}
                 repaymentsLoading={repayLoadingId === d.id}

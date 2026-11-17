@@ -19,6 +19,7 @@ import { Onboarding } from "@/components/raqamora/onboarding";
 import { Spinner } from "@/components/raqamora/kit";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Monogram } from "@/components/raqamora/brand";
+import { PinLockScreen, isPinLockEnabled } from "@/components/raqamora/pin-lock";
 
 /* ------------------------------------------------------------ View loading */
 
@@ -45,6 +46,8 @@ const VIEW_COMPONENTS: Record<ViewKey, ComponentType<ViewProps>> = {
   goals: nextDynamic(() => import("@/components/raqamora/views/goals"), { ssr: false, loading: () => <ViewLoading /> }),
   recurring: nextDynamic(() => import("@/components/raqamora/views/recurring"), { ssr: false, loading: () => <ViewLoading /> }),
   reports: nextDynamic(() => import("@/components/raqamora/views/reports"), { ssr: false, loading: () => <ViewLoading /> }),
+  zakat: nextDynamic(() => import("@/components/raqamora/views/zakat"), { ssr: false, loading: () => <ViewLoading /> }),
+  kameti: nextDynamic(() => import("@/components/raqamora/views/kameti"), { ssr: false, loading: () => <ViewLoading /> }),
   notifications: nextDynamic(() => import("@/components/raqamora/views/notifications"), { ssr: false, loading: () => <ViewLoading /> }),
   settings: nextDynamic(() => import("@/components/raqamora/views/settings"), { ssr: false, loading: () => <ViewLoading /> }),
 };
@@ -95,6 +98,7 @@ export function AppRoot() {
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [authMode, setAuthMode] = React.useState<AuthMode | null>(null);
   const [quickAddOpen, setQuickAddOpen] = React.useState(false);
+  const [isLocked, setIsLocked] = React.useState(() => isPinLockEnabled());
 
   React.useEffect(() => {
     const handler = () => setQuickAddOpen(true);
@@ -280,6 +284,10 @@ export function AppRoot() {
   }
 
   if (!user || !ctx) return <BootScreen />;
+
+  if (isLocked) {
+    return <PinLockScreen onUnlock={() => setIsLocked(false)} />;
+  }
 
   const ActiveView = VIEW_COMPONENTS[view];
 

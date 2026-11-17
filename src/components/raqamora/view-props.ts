@@ -10,6 +10,8 @@ export type ViewKey =
   | "budgets"
   | "goals"
   | "recurring"
+  | "zakat"
+  | "kameti"
   | "reports"
   | "notifications"
   | "settings";

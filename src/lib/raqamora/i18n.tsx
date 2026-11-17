@@ -61,6 +61,8 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       reports: "Reports",
       notifications: "Notifications",
       settings: "Settings",
+      kameti: "Kameti",
+      zakat: "Zakat",
     },
     viewMeta: {
       dashboard: { title: "Dashboard", subtitle: "Your money at a glance" },
@@ -74,6 +76,8 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       reports: { title: "Reports", subtitle: "Insights & CSV export" },
       notifications: { title: "Notifications", subtitle: "Alerts & reminders" },
       settings: { title: "Settings", subtitle: "Preferences & data" },
+      kameti: { title: "Kameti", subtitle: "Peer-saving & rotating credit tracker" },
+      zakat: { title: "Zakat Calculator", subtitle: "Nisab & Islamic wealth evaluation" },
     },
     common: {
       income: "Income",
@@ -117,6 +121,8 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       reports: "رپورٹس اور جائزے",
       notifications: "اطلاعات / الرٹس",
       settings: "ترتیبات",
+      kameti: "کمیٹی / بچت",
+      zakat: "زکوٰۃ کیلکولیٹر",
     },
     viewMeta: {
       dashboard: { title: "ڈیش بورڈ", subtitle: "آپ کے مالی معاملات کا خلاصہ" },
@@ -130,6 +136,8 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       reports: { title: "مالیاتی رپورٹس", subtitle: "مکمل تجزیہ اور فائل برآمد کریں" },
       notifications: { title: "الرٹس اور یاد دہانیاں", subtitle: "بجٹ اور ادھار کی واپسی کے پیغامات" },
       settings: { title: "ایپ ترتیبات", subtitle: "ترجیحات، ڈیٹا بیک اپ اور سیکیورٹی" },
+      kameti: { title: "کمیٹی ٹریکر", subtitle: "ماہانہ اقساط اور قرعہ اندازی کا حساب" },
+      zakat: { title: "زکوٰۃ کیلکولیٹر", subtitle: "نصاب کا تعین اور ڈھائی فیصد حساب" },
     },
     common: {
       income: "آمدنی",
@@ -173,6 +181,8 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       reports: "Reports & Charts",
       notifications: "Alerts",
       settings: "Settings",
+      kameti: "Kameti",
+      zakat: "Zakat",
     },
     viewMeta: {
       dashboard: { title: "Dashboard", subtitle: "Aap ke paison ka aik nazar jaiza" },
@@ -186,6 +196,8 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       reports: { title: "Reports", subtitle: "Tafseeli jaiza aur CSV download" },
       notifications: { title: "Alerts", subtitle: "Budget aur udhar ke reminders" },
       settings: { title: "Settings", subtitle: "Preferences aur data backup" },
+      kameti: { title: "Kameti Tracker", subtitle: "Mahana bachat committee aur barri" },
+      zakat: { title: "Zakat Calculator", subtitle: "Nisab aur 2.5% zakat ka hisab" },
     },
     common: {
       income: "Aamadni",

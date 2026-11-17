@@ -22,11 +22,15 @@ import {
   Calendar,
   Check,
   ChevronDown,
+  ClipboardPaste,
   HandCoins,
   Handshake,
+  Mic,
+  MicOff,
   Pencil,
   RotateCcw,
   SlidersHorizontal,
+  Sparkles,
   TrendingDown,
   TrendingUp,
   UserPlus,
@@ -38,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { ApiError, apiGet, apiSend, qs } from "@/lib/raqamora/client";
 import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { formatPKR, formatRupees } from "@/lib/raqamora/money";
+import { parseBankSms, type ParsedSmsTransaction } from "@/lib/raqamora/sms-parser";
 import { TXN_TYPE_LABELS, txnFieldRequirements, type TxnType } from "@/lib/raqamora/finance";
 import { transactionSchema } from "@/lib/raqamora/validation";
 import type {
@@ -54,6 +59,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
@@ -415,6 +429,131 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
     }
   }
 
+  /* ------------------------------------------------ Smart Assistant (SMS & Voice) */
+  const [smsDialogOpen, setSmsDialogOpen] = React.useState(false);
+  const [smsInput, setSmsInput] = React.useState("");
+  const [isListening, setIsListening] = React.useState(false);
+
+  const applyParsedSms = React.useCallback(
+    (parsed: ParsedSmsTransaction) => {
+      setValue("amountRupees", parsed.amountRupees);
+      if (parsed.type) selectType(parsed.type);
+      if (parsed.note) {
+        setValue("note", parsed.note);
+        setShowNote(true);
+      }
+      if (parsed.source) {
+        const src = parsed.source.toLowerCase();
+        const acc = accounts.find((a) => {
+          const name = a.name.toLowerCase();
+          return (
+            name.includes(src) ||
+            (src.includes("meezan") && name.includes("meezan")) ||
+            (src.includes("sadapay") && name.includes("sada")) ||
+            (src.includes("jazzcash") && name.includes("jazz")) ||
+            (src.includes("easypaisa") && name.includes("easy")) ||
+            (src.includes("nayapay") && name.includes("naya"))
+          );
+        });
+        if (acc) setValue("accountId", acc.id);
+      }
+      if (parsed.categoryHint) {
+        const hint = parsed.categoryHint.toLowerCase();
+        const cat = categories.find((c) => c.name.toLowerCase().includes(hint));
+        if (cat) setValue("categoryId", cat.id);
+      }
+      toast.success(`Detected ${formatRupees(parsed.amountRupees)} from ${parsed.source}!`);
+    },
+    [accounts, categories, setValue],
+  );
+
+  async function handlePasteSmsClick() {
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.readText) {
+        const text = await navigator.clipboard.readText();
+        const parsed = parseBankSms(text);
+        if (parsed) {
+          applyParsedSms(parsed);
+          return;
+        }
+      }
+    } catch {
+      /* clipboard restricted, open dialog */
+    }
+    setSmsDialogOpen(true);
+  }
+
+  function handleManualSmsSubmit() {
+    const parsed = parseBankSms(smsInput);
+    if (!parsed) {
+      toast.error("SMS se transaction details detect nahi ho sakin. Text check karein.");
+      return;
+    }
+    applyParsedSms(parsed);
+    setSmsDialogOpen(false);
+    setSmsInput("");
+  }
+
+  function toggleVoiceInput() {
+    const SpeechRecognition =
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      toast.error("Aapka browser voice recognition support nahi karta. Chrome ya Edge use karein.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "ur-PK";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast.info("Bolna shuru karein (e.g. '500 petrol' ya '1200 grocery')...");
+      };
+
+      recognition.onresult = (event: any) => {
+        setIsListening(false);
+        const transcript = event.results?.[0]?.[0]?.transcript || "";
+        if (!transcript) return;
+
+        const numMatch = transcript.match(/\d+/);
+        if (numMatch) {
+          setValue("amountRupees", parseFloat(numMatch[0]));
+        }
+        setValue("note", transcript);
+        setShowNote(true);
+
+        const lower = transcript.toLowerCase();
+        const matchedCat = categories.find((c) => lower.includes(c.name.toLowerCase()));
+        if (matchedCat) setValue("categoryId", matchedCat.id);
+
+        toast.success(`Voice entry recorded: "${transcript}"`);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        toast.error("Voice capture nahi ho saka.");
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  }
+
   function handlePersonChange(personId: string) {
     setValue("personId", personId, { shouldValidate: true });
     setValue("debtId", null);
@@ -699,6 +838,40 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
               </button>
             </PopoverContent>
           </Popover>
+        </div>
+      </div>
+
+      {/* Smart Quick Input: SMS Paste & Voice Entry */}
+      <div className="flex items-center justify-between px-1 pt-1">
+        <span className="text-[11px] font-semibold text-ink-soft uppercase tracking-wider">
+          Raqam Darj Karein
+        </span>
+        <div className="flex items-center gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handlePasteSmsClick}
+            className="h-7 gap-1 px-2.5 text-[11px] font-medium rounded-lg border-hairline hover:border-brand-emerald text-ink-soft hover:text-ink shadow-2xs"
+            title="Bank SMS paste karein taake amount aur details khud fill ho jayein"
+          >
+            <ClipboardPaste className="size-3 text-brand-emerald" />
+            <span>Paste SMS</span>
+          </Button>
+          <Button
+            type="button"
+            variant={isListening ? "destructive" : "outline"}
+            size="sm"
+            onClick={toggleVoiceInput}
+            className={cn(
+              "h-7 gap-1 px-2.5 text-[11px] font-medium rounded-lg border-hairline text-ink-soft hover:text-ink shadow-2xs",
+              isListening && "animate-pulse font-bold text-white",
+            )}
+            title="Bol kar entry karein (Urdu / English)"
+          >
+            {isListening ? <MicOff className="size-3" /> : <Mic className="size-3 text-brand-emerald" />}
+            <span>{isListening ? "Listening…" : "Voice"}</span>
+          </Button>
         </div>
       </div>
 
@@ -1202,6 +1375,38 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
                         : "Save Entry"}
         </Button>
       </div>
+      {/* SMS Paste Dialog */}
+      <Dialog open={smsDialogOpen} onOpenChange={setSmsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardPaste className="size-5 text-brand-emerald" />
+              Bank / Wallet SMS Paste Karein
+            </DialogTitle>
+            <DialogDescription>
+              Meezan, HBL, SadaPay, NayaPay, JazzCash ya Easypaisa ka SMS paste karein. Amount, note aur category khud fill ho jaye gi.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Textarea
+              placeholder="e.g. PKR 1,500.00 debited from A/C ...1234 on 17-Nov-2026 at PSO KARACHI..."
+              value={smsInput}
+              onChange={(e) => setSmsInput(e.target.value)}
+              rows={4}
+              className="text-xs"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" onClick={() => setSmsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleManualSmsSubmit} disabled={!smsInput.trim()}>
+              <Sparkles className="size-3.5 mr-1" />
+              Auto-Fill Details
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

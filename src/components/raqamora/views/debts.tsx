@@ -364,6 +364,7 @@ export default function DebtsView({ onViewChange }: ViewProps) {
                 <DebtCard
                   key={d.id}
                   debt={d}
+                  personPhone={people.find((p) => p.id === d.personId)?.phone}
                   onOpenPerson={() => goPerson(d.personId)}
                   onRepay={() => {
                     setRepayInitialId(d.id);
