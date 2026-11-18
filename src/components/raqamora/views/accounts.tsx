@@ -1510,10 +1510,41 @@ function AccountMonthlyProgressDialog({
     return () => window.removeEventListener("raqamora:txn-changed", handler);
   }, [fetchMonthly]);
 
+  const [inlineAmount, setInlineAmount] = React.useState("");
+  const [savingInline, setSavingInline] = React.useState(false);
+
   const activeRecord = React.useMemo(() => {
     if (!data) return null;
     return data.months.find((m) => m.month === selectedMonthKey) ?? data.months[0] ?? null;
   }, [data, selectedMonthKey]);
+
+  async function handleSaveInlineAmount() {
+    if (!account || !inlineAmount || Number(inlineAmount) <= 0) return;
+    setSavingInline(true);
+    try {
+      const isCur = selectedMonthKey === new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 7);
+      const dateStr = isCur ? new Date().toISOString() : `${selectedMonthKey}-01T10:00:00.000Z`;
+
+      await apiSend("/api/transactions", "POST", {
+        type: "INCOME",
+        amountRupees: Number(inlineAmount),
+        accountId: account.id,
+        date: dateStr,
+        note: `${activeRecord?.monthLabel ?? selectedMonthKey} Monthly Amount`,
+      });
+
+      toast.success(`Rs ${Number(inlineAmount).toLocaleString()} added to ${activeRecord?.monthLabel ?? selectedMonthKey}!`);
+      setInlineAmount("");
+      window.dispatchEvent(new Event("raqamora:txn-changed"));
+      fetchMonthly();
+    } catch (err) {
+      if (!guard(err)) {
+        toast.error(err instanceof Error ? err.message : "Raqam add nahi ho saki");
+      }
+    } finally {
+      setSavingInline(false);
+    }
+  }
 
   return (
     <Dialog
@@ -1582,6 +1613,73 @@ function AccountMonthlyProgressDialog({
                 >
                   <Plus className="size-3.5 mr-1" /> Is Mahine Ki Raqam Add Karein
                 </Button>
+              </div>
+
+              {/* Quick Write Amount Inline Card */}
+              <div className="rounded-2xl border border-brand-emerald/40 bg-brand-emerald/5 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-ink flex items-center gap-1.5">
+                    <Pencil className="size-3.5 text-brand-emerald" />
+                    <span>{activeRecord.monthLabel} ki Raqam Likhein (Write Amount):</span>
+                  </span>
+                  <span className="text-[11px] text-ink-soft">
+                    Selected Month: <strong>{activeRecord.monthLabel}</strong>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">Rs</span>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder={`e.g. 50,000 for ${activeRecord.monthLabel}`}
+                      value={inlineAmount}
+                      onChange={(e) => setInlineAmount(e.target.value)}
+                      className="pl-9 h-10 text-sm font-bold bg-card"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => void handleSaveInlineAmount()}
+                    disabled={!inlineAmount || Number(inlineAmount) <= 0 || savingInline}
+                    className="h-10 px-4 rounded-xl font-semibold bg-brand-emerald text-white active:scale-95 shadow-sm shrink-0"
+                  >
+                    {savingInline ? "Saving…" : "Save Raqam"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onAddMonthlyAmount(selectedMonthKey)}
+                    className="h-10 px-3 rounded-xl text-xs font-semibold hover:bg-muted shrink-0"
+                    title="Detailed form"
+                  >
+                    Details
+                  </Button>
+                </div>
+                {/* Quick Increment Pills */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10.5px] text-ink-soft mr-1">Quick:</span>
+                  {[5000, 10000, 25000, 50000, 100000].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        const cur = Number(inlineAmount) || 0;
+                        setInlineAmount((cur + val).toString());
+                      }}
+                      className="rounded-full border border-hairline/80 px-2.5 py-0.5 text-[10.5px] font-medium text-ink-soft hover:bg-muted/80 active:scale-95 transition-all bg-card/60"
+                    >
+                      +{val.toLocaleString()}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setInlineAmount("")}
+                    className="rounded-full border border-hairline/80 px-2.5 py-0.5 text-[10.5px] font-medium text-ink-soft hover:bg-muted/80 active:scale-95 transition-all"
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
 
               {/* Active Month 3-Card Summary */}
