@@ -25,6 +25,26 @@ export interface AccountWithBalance {
   balance: number;
   txnCount: number;
   createdAt: string;
+  thisMonthInflow?: number;
+  thisMonthOutflow?: number;
+  thisMonthNet?: number;
+}
+
+export interface AccountMonthlyRecord {
+  month: string; // "YYYY-MM"
+  monthLabel: string; // "November 2026"
+  inflow: number; // paisa
+  outflow: number; // paisa
+  net: number; // paisa
+  endingBalance: number; // paisa
+  txnCount: number;
+  savingsRate: number; // % (0-100)
+}
+
+export interface AccountMonthlyResponse {
+  account: AccountWithBalance;
+  currentMonth: string;
+  months: AccountMonthlyRecord[];
 }
 
 export interface DebtWithOutstanding {

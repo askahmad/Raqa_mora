@@ -9,9 +9,11 @@ const patchSchema = z.object({
   color: z.string().max(20).optional(),
   icon: z.string().max(30).optional(),
   archived: z.boolean().optional(),
+  openingBalanceRupees: z.number().optional(),
+  balanceRupees: z.number().optional(),
 });
 
-/** PATCH /api/accounts/[id] — rename / recolor / archive. */
+/** PATCH /api/accounts/[id] — rename / recolor / archive / update amount & balance. */
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireUser();
@@ -24,6 +26,44 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (!existing) throw new HttpError(404, "Account not found");
 
     const data = parsed.data;
+
+    const txnCount = await db.transaction.count({
+      where: { userId: session.id, OR: [{ accountId: id }, { toAccountId: id }] },
+    });
+
+    let nextOpeningBalance = existing.openingBalance;
+
+    // Direct opening balance edit if no transactions yet
+    if (data.openingBalanceRupees !== undefined && txnCount === 0) {
+      nextOpeningBalance = Math.round(data.openingBalanceRupees * 100);
+    }
+
+    // Direct balance edit
+    if (data.balanceRupees !== undefined) {
+      const targetPaisa = Math.round(data.balanceRupees * 100);
+      if (txnCount === 0) {
+        nextOpeningBalance = targetPaisa;
+      } else {
+        const accountsBefore = await getAccountsWithBalances(session.id);
+        const currentAccount = accountsBefore.find((a) => a.id === id);
+        const curBalance = currentAccount?.balance ?? existing.openingBalance;
+        const diff = targetPaisa - curBalance;
+        if (diff !== 0) {
+          await db.transaction.create({
+            data: {
+              userId: session.id,
+              type: "ADJUSTMENT",
+              amount: Math.abs(diff),
+              signed: diff > 0 ? 1 : -1,
+              accountId: id,
+              reason: `Balance updated to Rs ${Math.round(targetPaisa / 100).toLocaleString()}`,
+              date: new Date(),
+            },
+          });
+        }
+      }
+    }
+
     await db.account.update({
       where: { id },
       data: {
@@ -31,6 +71,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         ...(data.color !== undefined ? { color: data.color } : {}),
         ...(data.icon !== undefined ? { icon: data.icon } : {}),
         ...(data.archived !== undefined ? { archived: data.archived } : {}),
+        openingBalance: nextOpeningBalance,
       },
     });
 

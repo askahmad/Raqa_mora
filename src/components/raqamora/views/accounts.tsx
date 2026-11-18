@@ -14,13 +14,19 @@ import {
   Archive,
   ArchiveRestore,
   ArrowLeftRight,
+  Calendar,
+  CalendarRange,
+  Check,
   ChevronDown,
   Ellipsis,
   History,
   Pencil,
   Plus,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
+  TrendingDown,
+  TrendingUp,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -37,7 +43,13 @@ import {
   type TxnType,
 } from "@/lib/raqamora/finance";
 import { accountSchema } from "@/lib/raqamora/validation";
-import type { AccountWithBalance, TxnRow } from "@/lib/raqamora/types";
+import type {
+  AccountMonthlyRecord,
+  AccountMonthlyResponse,
+  AccountWithBalance,
+  CategoryRow,
+  TxnRow,
+} from "@/lib/raqamora/types";
 import { AccountIcon, AppIcon, ICON_CHOICES } from "@/components/raqamora/icon";
 import {
   ConfirmDialog,
@@ -116,6 +128,13 @@ function fmtDay(iso: string): string {
   return dayFmt.format(new Date(iso));
 }
 
+function fmtMonthLabel(monthKey: string): string {
+  const [y, m] = monthKey.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(
+    new Date(Date.UTC(y, m - 1, 15)),
+  );
+}
+
 function typeLabel(t: TxnRow): string {
   return TXN_TYPE_LABELS[t.type as TxnType] ?? String(t.type);
 }
@@ -136,6 +155,9 @@ export default function AccountsView(_props: ViewProps) {
   const [editing, setEditing] = React.useState<AccountWithBalance | null>(null);
   const [historyOf, setHistoryOf] = React.useState<AccountWithBalance | null>(null);
   const [adjusting, setAdjusting] = React.useState<AccountWithBalance | null>(null);
+  const [quickEditAccount, setQuickEditAccount] = React.useState<AccountWithBalance | null>(null);
+  const [monthlyAccount, setMonthlyAccount] = React.useState<AccountWithBalance | null>(null);
+  const [addMonthlyFor, setAddMonthlyFor] = React.useState<{ account: AccountWithBalance; month?: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = React.useState<AccountWithBalance | null>(null);
   const [deleting, setDeleting] = React.useState(false);
   const [transferOpen, setTransferOpen] = React.useState(false);
@@ -308,6 +330,8 @@ export default function AccountsView(_props: ViewProps) {
                 setFormOpen(true);
               }}
               onAdjust={() => setAdjusting(a)}
+              onQuickEdit={() => setQuickEditAccount(a)}
+              onMonthlyProgress={() => setMonthlyAccount(a)}
               onToggleArchive={() => void toggleArchive(a)}
               onDelete={() => setConfirmDelete(a)}
             />
@@ -346,6 +370,8 @@ export default function AccountsView(_props: ViewProps) {
                     setFormOpen(true);
                   }}
                   onAdjust={() => setAdjusting(a)}
+                  onQuickEdit={() => setQuickEditAccount(a)}
+                  onMonthlyProgress={() => setMonthlyAccount(a)}
                   onToggleArchive={() => void toggleArchive(a)}
                   onDelete={() => setConfirmDelete(a)}
                 />
@@ -363,6 +389,34 @@ export default function AccountsView(_props: ViewProps) {
         account={editing}
         onSaved={(message) => {
           setFormOpen(false);
+          notifyMutation(message);
+        }}
+      />
+
+      <QuickEditAmountDialog
+        account={quickEditAccount}
+        onClose={() => setQuickEditAccount(null)}
+        onSaved={(message) => {
+          setQuickEditAccount(null);
+          notifyMutation(message);
+        }}
+      />
+
+      <AccountMonthlyProgressDialog
+        account={monthlyAccount}
+        onClose={() => setMonthlyAccount(null)}
+        onAddMonthlyAmount={(month) => {
+          if (monthlyAccount) {
+            setAddMonthlyFor({ account: monthlyAccount, month });
+          }
+        }}
+      />
+
+      <AddMonthlyAmountDialog
+        target={addMonthlyFor}
+        onClose={() => setAddMonthlyFor(null)}
+        onSaved={(message) => {
+          setAddMonthlyFor(null);
           notifyMutation(message);
         }}
       />
@@ -423,6 +477,8 @@ function AccountCard({
   onViewHistory,
   onEdit,
   onAdjust,
+  onQuickEdit,
+  onMonthlyProgress,
   onToggleArchive,
   onDelete,
 }: {
@@ -432,81 +488,154 @@ function AccountCard({
   onViewHistory: () => void;
   onEdit: () => void;
   onAdjust: () => void;
+  onQuickEdit: () => void;
+  onMonthlyProgress: () => void;
   onToggleArchive: () => void;
   onDelete: () => void;
 }) {
   return (
-    <article className={cn("spotlight-card rounded-2xl border border-hairline/80 bg-card p-4 sm:p-5 shadow-card transition-all active:scale-[0.99]", muted && "opacity-60")}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-3">
-          <span
-            className="flex size-10 shrink-0 items-center justify-center rounded-xl"
-            style={{ backgroundColor: `${account.color}1f`, color: account.color }}
-            aria-hidden
-          >
-            <AccountIcon type={account.type} className="size-5" />
-          </span>
-          <div className="min-w-0">
-            <h3 className="flex items-center gap-1.5 truncate text-[14px] font-semibold text-ink">
-              <span className="truncate">{account.name}</span>
-              {account.archived ? (
-                <Badge variant="outline" className="shrink-0 px-1 py-0 text-[9px] uppercase text-ink-soft">
-                  Archived
-                </Badge>
-              ) : null}
-            </h3>
-            <p className="truncate text-xs text-ink-soft">
-              {ACCOUNT_TYPE_LABELS[account.type as AccountType] ?? String(account.type)}
-            </p>
+    <article className={cn("spotlight-card rounded-2xl border border-hairline/80 bg-card p-4 sm:p-5 shadow-card transition-all active:scale-[0.99] flex flex-col justify-between", muted && "opacity-60")}>
+      <div>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl"
+              style={{ backgroundColor: `${account.color}1f`, color: account.color }}
+              aria-hidden
+            >
+              <AccountIcon type={account.type} className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="flex items-center gap-1.5 truncate text-[14px] font-semibold text-ink">
+                <span className="truncate">{account.name}</span>
+                {account.archived ? (
+                  <Badge variant="outline" className="shrink-0 px-1 py-0 text-[9px] uppercase text-ink-soft">
+                    Archived
+                  </Badge>
+                ) : null}
+              </h3>
+              <p className="truncate text-xs text-ink-soft">
+                {ACCOUNT_TYPE_LABELS[account.type as AccountType] ?? String(account.type)}
+              </p>
+            </div>
           </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 shrink-0 text-ink-soft"
+                aria-label={`Manage ${account.name}`}
+                disabled={busy}
+              >
+                <Ellipsis className="size-4" aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={onQuickEdit}>
+                <Pencil className="size-4" aria-hidden /> Edit amount
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onMonthlyProgress}>
+                <CalendarRange className="size-4" aria-hidden /> Monthly progress
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onAdjust}>
+                <SlidersHorizontal className="size-4" aria-hidden /> Reconcile balance
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onViewHistory}>
+                <History className="size-4" aria-hidden /> View history
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil className="size-4" aria-hidden /> Edit account info
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onToggleArchive}>
+                {account.archived ? (
+                  <ArchiveRestore className="size-4" aria-hidden />
+                ) : (
+                  <Archive className="size-4" aria-hidden />
+                )}
+                {account.archived ? "Unarchive" : "Archive"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="text-danger-brand focus:bg-danger-brand/10 focus:text-danger-brand"
+              >
+                <Trash2 className="size-4" aria-hidden /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <Money value={account.balance} size="lg" colored />
             <Button
+              type="button"
               variant="ghost"
               size="icon"
-              className="size-8 shrink-0 text-ink-soft"
-              aria-label={`Manage ${account.name}`}
-              disabled={busy}
+              onClick={onQuickEdit}
+              className="size-7 rounded-lg text-ink-soft hover:text-ink hover:bg-muted/80 active:scale-95 transition-all"
+              title="Edit amount / balance"
             >
-              <Ellipsis className="size-4" aria-hidden />
+              <Pencil className="size-3.5" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={onViewHistory}>
-              <History className="size-4" aria-hidden /> View history
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="size-4" aria-hidden /> Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onAdjust}>
-              <SlidersHorizontal className="size-4" aria-hidden /> Adjust balance
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onToggleArchive}>
-              {account.archived ? (
-                <ArchiveRestore className="size-4" aria-hidden />
-              ) : (
-                <Archive className="size-4" aria-hidden />
+          </div>
+          <span className="text-[11px] text-ink-soft font-medium">
+            {account.txnCount} {account.txnCount === 1 ? "transaction" : "transactions"}
+          </span>
+        </div>
+
+        {/* Monthly Progress Overview Strip */}
+        <div className="mt-3 rounded-2xl bg-muted/40 p-2.5 border border-hairline/60">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-ink-soft mb-1.5">
+            <span className="flex items-center gap-1">
+              <Calendar className="size-3 text-brand-emerald" />
+              This Month (ماہانہ رپورٹ)
+            </span>
+            <span
+              className={cn(
+                "font-bold text-xs",
+                (account.thisMonthNet ?? 0) >= 0 ? "text-brand-emerald-deep dark:text-[#53c6ac]" : "text-danger-brand"
               )}
-              {account.archived ? "Unarchive" : "Archive"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={onDelete}
-              className="text-danger-brand focus:bg-danger-brand/10 focus:text-danger-brand"
             >
-              <Trash2 className="size-4" aria-hidden /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {(account.thisMonthNet ?? 0) >= 0 ? "+" : "−"}{formatPKR(Math.abs(account.thisMonthNet ?? 0))}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs font-medium">
+            <div className="flex items-center gap-1 text-brand-emerald-deep dark:text-[#53c6ac] truncate">
+              <TrendingUp className="size-3.5 shrink-0" />
+              <span className="truncate">+{formatPKR(account.thisMonthInflow ?? 0)}</span>
+            </div>
+            <div className="flex items-center gap-1 text-danger-brand justify-end truncate">
+              <TrendingDown className="size-3.5 shrink-0" />
+              <span className="truncate">−{formatPKR(account.thisMonthOutflow ?? 0)}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-3 flex items-end justify-between gap-2">
-        <Money value={account.balance} size="lg" colored />
-        <span className="text-[11px] text-ink-soft">
-          {account.txnCount} {account.txnCount === 1 ? "transaction" : "transactions"}
-        </span>
+      {/* Quick Action Buttons */}
+      <div className="mt-4 grid grid-cols-2 gap-2 pt-2 border-t border-hairline/60">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onQuickEdit}
+          className="min-h-8.5 rounded-xl text-xs font-semibold hover:bg-muted/80 active:scale-95 transition-all shadow-2xs"
+        >
+          <Pencil className="size-3 mr-1 text-ink-soft" />
+          Edit Amount
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={onMonthlyProgress}
+          className="min-h-8.5 rounded-xl text-xs font-semibold bg-brand-emerald/10 text-brand-emerald-deep hover:bg-brand-emerald/20 dark:text-[#53c6ac] dark:bg-brand-emerald/20 active:scale-95 transition-all shadow-2xs"
+        >
+          <CalendarRange className="size-3 mr-1" />
+          Monthly Report
+        </Button>
       </div>
     </article>
   );
@@ -938,6 +1067,683 @@ function AdjustBalanceDialog({
                 ? `Record ${diff > 0 ? "increase" : "decrease"} of ${formatPKR(Math.abs(diff))}`
                 : "Record adjustment"}
           </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* --------------------------------------------------- quick edit amount dialog */
+
+function QuickEditAmountDialog({
+  account,
+  onClose,
+  onSaved,
+}: {
+  account: AccountWithBalance | null;
+  onClose: () => void;
+  onSaved: (msg: string) => void;
+}) {
+  const guard = useUnauthorizedGuard();
+  const [amountInput, setAmountInput] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (account) {
+      setAmountInput((account.balance / 100).toString());
+    } else {
+      setAmountInput("");
+    }
+  }, [account]);
+
+  const targetPaisa = parseRupeesToPaisa(amountInput);
+  const recordedPaisa = account?.balance ?? 0;
+  const diff = targetPaisa !== null ? targetPaisa - recordedPaisa : null;
+
+  async function submit() {
+    if (!account || targetPaisa === null) return;
+    setSaving(true);
+    try {
+      await apiSend(`/api/accounts/${account.id}`, "PATCH", {
+        balanceRupees: targetPaisa / 100,
+        openingBalanceRupees: targetPaisa / 100,
+      });
+      onSaved(`${account.name} ka balance update ho gaya (${formatPKR(targetPaisa)})`);
+    } catch (err) {
+      if (!guard(err)) {
+        toast.error(err instanceof Error ? err.message : "Balance update nahi ho saka");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function addRupees(add: number) {
+    const current = Number(amountInput) || 0;
+    setAmountInput(Math.max(0, current + add).toString());
+  }
+
+  return (
+    <Dialog
+      open={account !== null}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-base flex items-center gap-2">
+            <span
+              className="flex size-7 items-center justify-center rounded-lg"
+              style={{ backgroundColor: `${account?.color}1f`, color: account?.color }}
+            >
+              <AccountIcon type={account?.type ?? "CASH"} className="size-4" />
+            </span>
+            <span>Edit Amount — {account?.name}</span>
+          </DialogTitle>
+          <DialogDescription>
+            Account ka mojooda balance update karein taake actual raqam ka hisaab bilkul darust rahay.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between rounded-2xl border border-hairline bg-muted/40 p-3">
+            <span className="text-xs text-ink-soft">Recorded Balance</span>
+            <Money value={recordedPaisa} size="md" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="raqamora-quick-amount-input" className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+              Naya Balance / Amount (Rs)
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-ink-soft">Rs</span>
+              <Input
+                id="raqamora-quick-amount-input"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                placeholder="0"
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value)}
+                className="pl-11 min-h-12 text-lg font-bold"
+                disabled={saving}
+                autoFocus
+              />
+            </div>
+
+            {/* Quick Increment Chips */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setAmountInput("0")}
+                className="rounded-full border border-hairline/80 px-2.5 py-1 text-[11px] font-medium text-ink-soft hover:bg-muted/80 active:scale-95 transition-all"
+              >
+                Clear
+              </button>
+              {[1000, 5000, 10000, 50000, 100000].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => addRupees(val)}
+                  className="rounded-full border border-hairline/80 px-2.5 py-1 text-[11px] font-medium text-ink-soft hover:bg-muted/80 active:scale-95 transition-all"
+                >
+                  +{val.toLocaleString()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {diff !== null && diff !== 0 && (
+            <div
+              className={cn(
+                "rounded-xl p-3 text-xs font-semibold flex items-center justify-between",
+                diff > 0 ? "bg-brand-emerald/10 text-brand-emerald-deep dark:text-[#53c6ac]" : "bg-danger-brand/10 text-danger-brand"
+              )}
+            >
+              <span>{diff > 0 ? "Balance barh jaye ga:" : "Balance kam ho jaye ga:"}</span>
+              <span className="font-bold">{diff > 0 ? "+" : "−"}{formatPKR(Math.abs(diff))}</span>
+            </div>
+          )}
+
+          <Button
+            type="button"
+            onClick={() => void submit()}
+            disabled={saving || targetPaisa === null}
+            className="w-full min-h-11 font-semibold rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white shadow-md active:scale-95 transition-all"
+          >
+            {saving ? <Spinner className="size-4 mr-2" /> : <Check className="size-4 mr-1.5" />}
+            {saving ? "Saving…" : "Save Amount"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* --------------------------------------------------- add monthly amount dialog */
+
+function AddMonthlyAmountDialog({
+  target,
+  onClose,
+  onSaved,
+}: {
+  target: { account: AccountWithBalance; month?: string } | null;
+  onClose: () => void;
+  onSaved: (msg: string) => void;
+}) {
+  const guard = useUnauthorizedGuard();
+  const account = target?.account ?? null;
+  const initialMonth = target?.month ?? new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 7);
+
+  const [selectedMonth, setSelectedMonth] = React.useState(initialMonth);
+  const [amountRupees, setAmountRupees] = React.useState("");
+  const [note, setNote] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  // Load categories to pick income category (Salary, Freelance, etc.)
+  const cachedCategories = getCachedGet<{ categories: CategoryRow[] }>("/api/categories")?.categories;
+  const [categories, setCategories] = React.useState<CategoryRow[]>(() => cachedCategories?.filter((c) => c.kind === "INCOME") ?? []);
+  const [categoryId, setCategoryId] = React.useState<string>("");
+
+  React.useEffect(() => {
+    if (target?.month) setSelectedMonth(target.month);
+    setAmountRupees("");
+    setNote("");
+  }, [target]);
+
+  React.useEffect(() => {
+    if (categories.length === 0) {
+      apiGet<{ categories: CategoryRow[] }>("/api/categories")
+        .then(({ categories: all }) => {
+          const inc = all.filter((c) => c.kind === "INCOME");
+          setCategories(inc);
+          if (inc.length > 0 && !categoryId) setCategoryId(inc[0].id);
+        })
+        .catch(() => {});
+    } else if (!categoryId && categories.length > 0) {
+      setCategoryId(categories[0].id);
+    }
+  }, [categories, categoryId]);
+
+  // Options for months: current month and past 11 months + next month
+  const monthOptions = React.useMemo(() => {
+    const list: Array<{ value: string; label: string }> = [];
+    const now = new Date(Date.now() + 5 * 60 * 60 * 1000);
+    const curKey = now.toISOString().slice(0, 7);
+
+    // Add next month
+    const [cy, cm] = curKey.split("-").map(Number);
+    const nextKey = new Date(Date.UTC(cy, cm, 15)).toISOString().slice(0, 7);
+    list.push({ value: nextKey, label: fmtMonthLabel(nextKey) });
+
+    // Add current and past 11 months
+    for (let i = 0; i < 12; i++) {
+      const k = new Date(Date.UTC(cy, cm - 1 - i, 15)).toISOString().slice(0, 7);
+      list.push({ value: k, label: fmtMonthLabel(k) });
+    }
+    return list;
+  }, []);
+
+  async function submit() {
+    if (!account || !amountRupees || Number(amountRupees) <= 0) {
+      toast.error("Valid amount darj karein");
+      return;
+    }
+    setSaving(true);
+    try {
+      const monthLabel = fmtMonthLabel(selectedMonth);
+      const isCur = selectedMonth === new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 7);
+      const dateStr = isCur ? new Date().toISOString() : `${selectedMonth}-01T10:00:00.000Z`;
+
+      await apiSend("/api/transactions", "POST", {
+        type: "INCOME",
+        amountRupees: Number(amountRupees),
+        accountId: account.id,
+        categoryId: categoryId || null,
+        date: dateStr,
+        note: note.trim() || `${monthLabel} Monthly Inflow`,
+      });
+
+      onSaved(`Rs ${Number(amountRupees).toLocaleString()} successfully added to ${monthLabel} for ${account.name}!`);
+    } catch (err) {
+      if (!guard(err)) {
+        toast.error(err instanceof Error ? err.message : "Raqam add nahi ho saki");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function addQuick(val: number) {
+    const current = Number(amountRupees) || 0;
+    setAmountRupees((current + val).toString());
+  }
+
+  return (
+    <Dialog
+      open={target !== null}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-base flex items-center gap-2">
+            <span
+              className="flex size-7 items-center justify-center rounded-lg"
+              style={{ backgroundColor: `${account?.color}1f`, color: account?.color }}
+            >
+              <AccountIcon type={account?.type ?? "CASH"} className="size-4" />
+            </span>
+            <span>Add Monthly Amount — {account?.name}</span>
+          </DialogTitle>
+          <DialogDescription>
+            Is account mein kisi bhi mahine ki aamdani, salary ya starting balance add karein.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Month Selector */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+              Month (مہینہ منتخب کریں)
+            </Label>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="min-h-11">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-56">
+                {monthOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Amount Input */}
+          <div className="space-y-1.5">
+            <Label htmlFor="raqamora-monthly-amount-input" className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+              Amount (Rs)
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-ink-soft">Rs</span>
+              <Input
+                id="raqamora-monthly-amount-input"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                placeholder="50,000"
+                value={amountRupees}
+                onChange={(e) => setAmountRupees(e.target.value)}
+                className="pl-11 min-h-12 text-lg font-bold"
+                disabled={saving}
+                autoFocus
+              />
+            </div>
+
+            {/* Quick Increments */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setAmountRupees("")}
+                className="rounded-full border border-hairline/80 px-2.5 py-1 text-[11px] font-medium text-ink-soft hover:bg-muted/80 active:scale-95 transition-all"
+              >
+                Clear
+              </button>
+              {[5000, 10000, 25000, 50000, 100000].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => addQuick(val)}
+                  className="rounded-full border border-hairline/80 px-2.5 py-1 text-[11px] font-medium text-ink-soft hover:bg-muted/80 active:scale-95 transition-all"
+                >
+                  +{val.toLocaleString()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Category */}
+          {categories.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Category (قسم)
+              </Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger className="min-h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <span className="flex items-center gap-2">
+                        <AppIcon name={c.icon} className="size-4 text-ink-soft" />
+                        <span>{c.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Note */}
+          <div className="space-y-1.5">
+            <Label htmlFor="raqamora-monthly-note" className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+              Note (تفصیل / اختیاری)
+            </Label>
+            <Input
+              id="raqamora-monthly-note"
+              placeholder="e.g. Monthly Salary / Initial Deposit"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="min-h-10 text-sm"
+              disabled={saving}
+            />
+          </div>
+
+          <Button
+            type="button"
+            onClick={() => void submit()}
+            disabled={saving || !amountRupees || Number(amountRupees) <= 0}
+            className="w-full min-h-11 font-semibold rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white shadow-md active:scale-95 transition-all"
+          >
+            {saving ? <Spinner className="size-4 mr-2" /> : <Plus className="size-4 mr-1.5" />}
+            {saving ? "Saving…" : `Save ${amountRupees ? `• Rs ${Number(amountRupees).toLocaleString()}` : ""}`}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* --------------------------------------------------- monthly progress dialog */
+
+function AccountMonthlyProgressDialog({
+  account,
+  onClose,
+  onAddMonthlyAmount,
+}: {
+  account: AccountWithBalance | null;
+  onClose: () => void;
+  onAddMonthlyAmount: (month?: string) => void;
+}) {
+  const guard = useUnauthorizedGuard();
+  const [data, setData] = React.useState<AccountMonthlyResponse | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [selectedMonthKey, setSelectedMonthKey] = React.useState<string>("");
+
+  const fetchMonthly = React.useCallback(() => {
+    if (!account) return;
+    setLoading(true);
+    setError(null);
+    apiGet<AccountMonthlyResponse>(`/api/accounts/${account.id}/monthly`)
+      .then((res) => {
+        setData(res);
+        if (!selectedMonthKey && res.currentMonth) {
+          setSelectedMonthKey(res.currentMonth);
+        }
+      })
+      .catch((err) => {
+        if (!guard(err)) {
+          setError(err instanceof Error ? err.message : "Could not load monthly progress");
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [account, guard, selectedMonthKey]);
+
+  React.useEffect(() => {
+    if (account) {
+      setSelectedMonthKey("");
+      fetchMonthly();
+    }
+  }, [account, fetchMonthly]);
+
+  // Refetch when transactions change
+  React.useEffect(() => {
+    const handler = () => fetchMonthly();
+    window.addEventListener("raqamora:txn-changed", handler);
+    return () => window.removeEventListener("raqamora:txn-changed", handler);
+  }, [fetchMonthly]);
+
+  const activeRecord = React.useMemo(() => {
+    if (!data) return null;
+    return data.months.find((m) => m.month === selectedMonthKey) ?? data.months[0] ?? null;
+  }, [data, selectedMonthKey]);
+
+  return (
+    <Dialog
+      open={account !== null}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="p-5 pb-3 border-b border-hairline">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span
+                className="flex size-10 shrink-0 items-center justify-center rounded-xl"
+                style={{ backgroundColor: `${account?.color}1f`, color: account?.color }}
+              >
+                <AccountIcon type={account?.type ?? "CASH"} className="size-5" />
+              </span>
+              <div>
+                <DialogTitle className="text-base font-bold flex items-center gap-2">
+                  <span>{account?.name}</span>
+                  <Badge variant="outline" className="text-[10px] font-normal uppercase tracking-wider">
+                    Monthly Progress
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-ink-soft">
+                  Har mahine ka alag record, aamdani, kharcha aur bachat ki progress.
+                </DialogDescription>
+              </div>
+            </div>
+            {account && <Money value={account.balance} size="md" colored />}
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 [scrollbar-width:thin]">
+          {loading && !data && <SkeletonList rows={4} />}
+          {error && <EmptyState title="Couldn't load monthly progress" description={error} actionLabel="Retry" onAction={fetchMonthly} />}
+
+          {data && activeRecord && (
+            <>
+              {/* Month Selector Bar */}
+              <div className="flex items-center justify-between rounded-2xl bg-muted/60 p-1.5 border border-hairline">
+                <Select value={selectedMonthKey} onValueChange={setSelectedMonthKey}>
+                  <SelectTrigger className="h-9 border-none bg-transparent hover:bg-muted font-bold text-xs">
+                    <Calendar className="size-3.5 mr-1.5 text-brand-emerald" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {data.months.map((m) => (
+                      <SelectItem key={m.month} value={m.month}>
+                        <div className="flex items-center justify-between gap-4 w-full">
+                          <span>{m.monthLabel}</span>
+                          <span className={cn("text-[11px] font-semibold", m.net >= 0 ? "text-brand-emerald-deep" : "text-danger-brand")}>
+                            {m.net >= 0 ? "+" : "−"}{formatPKR(Math.abs(m.net))}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  size="sm"
+                  onClick={() => onAddMonthlyAmount(selectedMonthKey)}
+                  className="h-8 rounded-xl bg-brand-emerald text-white text-xs font-semibold shadow-sm active:scale-95"
+                >
+                  <Plus className="size-3.5 mr-1" /> Is Mahine Ki Raqam Add Karein
+                </Button>
+              </div>
+
+              {/* Active Month 3-Card Summary */}
+              <div className="grid grid-cols-3 gap-2.5">
+                {/* Inflow */}
+                <div className="rounded-2xl border border-hairline/80 bg-card p-3 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-brand-emerald-deep dark:text-[#53c6ac] mb-1">
+                    <TrendingUp className="size-3.5" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Aaya / Inflow</span>
+                  </div>
+                  <Money value={activeRecord.inflow} size="md" className="text-brand-emerald-deep dark:text-[#53c6ac] font-bold" />
+                  <p className="text-[10.5px] text-ink-soft mt-1">Total added</p>
+                </div>
+
+                {/* Outflow */}
+                <div className="rounded-2xl border border-hairline/80 bg-card p-3 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-danger-brand mb-1">
+                    <TrendingDown className="size-3.5" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Kharcha</span>
+                  </div>
+                  <Money value={activeRecord.outflow} size="md" className="text-danger-brand font-bold" />
+                  <p className="text-[10.5px] text-ink-soft mt-1">Total spent</p>
+                </div>
+
+                {/* Net Progress */}
+                <div className="rounded-2xl border border-hairline/80 bg-card p-3 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-ink-soft mb-1">
+                    <Sparkles className="size-3.5 text-gold" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Net Bachat</span>
+                  </div>
+                  <span className={cn(
+                    "text-[15px] font-extrabold truncate block",
+                    activeRecord.net >= 0 ? "text-brand-emerald-deep dark:text-[#53c6ac]" : "text-danger-brand"
+                  )}>
+                    {activeRecord.net >= 0 ? "+" : "−"}{formatPKR(Math.abs(activeRecord.net))}
+                  </span>
+                  <p className="text-[10.5px] text-ink-soft mt-1">
+                    {activeRecord.savingsRate > 0 ? `${activeRecord.savingsRate}% bachat` : "0% savings"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Visual Progress Bar */}
+              <div className="rounded-2xl border border-hairline/80 bg-card p-4 space-y-2 shadow-2xs">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span>{activeRecord.monthLabel} Progress & Health</span>
+                  <span className={cn(
+                    "font-bold",
+                    activeRecord.net >= 0 ? "text-brand-emerald-deep dark:text-[#53c6ac]" : "text-danger-brand"
+                  )}>
+                    {activeRecord.net >= 0 ? `Bachat hui: ${activeRecord.savingsRate}%` : "Kharcha aamdani se zyada"}
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className="h-3 w-full rounded-full bg-muted overflow-hidden flex">
+                  {activeRecord.inflow > 0 ? (
+                    <>
+                      <div
+                        style={{ width: `${Math.min(100, Math.round((activeRecord.outflow / activeRecord.inflow) * 100))}%` }}
+                        className="bg-danger-brand/80 transition-all"
+                        title={`Spent: ${formatPKR(activeRecord.outflow)}`}
+                      />
+                      <div
+                        style={{ width: `${Math.max(0, 100 - Math.min(100, Math.round((activeRecord.outflow / activeRecord.inflow) * 100)))}%` }}
+                        className="bg-brand-emerald transition-all"
+                        title={`Saved: ${formatPKR(Math.max(0, activeRecord.net))}`}
+                      />
+                    </>
+                  ) : (
+                    <div className="w-full bg-muted-foreground/20 text-center text-[9px] text-ink-soft flex items-center justify-center">
+                      Koi entry nahi
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-ink-soft">
+                  <span className="flex items-center gap-1">
+                    <span className="size-2 rounded-full bg-danger-brand" />
+                    Kharch: {formatPKR(activeRecord.outflow)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="size-2 rounded-full bg-brand-emerald" />
+                    Bachat: {formatPKR(Math.max(0, activeRecord.net))}
+                  </span>
+                  <span>Month End Balance: {formatPKR(activeRecord.endingBalance)}</span>
+                </div>
+              </div>
+
+              {/* Month-by-Month Full Comparison */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                    Mahana Progress History (تمام مہینوں کی رپورٹ)
+                  </h4>
+                  <span className="text-[11px] text-ink-soft">
+                    Past {data.months.length} months
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {data.months.map((m) => {
+                    const isSelected = m.month === selectedMonthKey;
+                    return (
+                      <div
+                        key={m.month}
+                        className={cn(
+                          "rounded-2xl border p-3.5 transition-all flex items-center justify-between gap-3",
+                          isSelected
+                            ? "border-brand-emerald bg-brand-emerald/5 shadow-sm ring-1 ring-brand-emerald/30"
+                            : "border-hairline bg-card hover:bg-muted/30"
+                        )}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-ink">{m.monthLabel}</span>
+                            {m.month === data.currentMonth && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 uppercase text-brand-emerald border-brand-emerald/40">
+                                Current
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft mt-1">
+                            <span className="text-brand-emerald-deep dark:text-[#53c6ac] font-medium">
+                              +{formatPKR(m.inflow)} in
+                            </span>
+                            <span className="text-danger-brand font-medium">
+                              −{formatPKR(m.outflow)} out
+                            </span>
+                            <span>{m.txnCount} txns</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="text-right">
+                            <span className={cn(
+                              "text-xs font-bold block",
+                              m.net >= 0 ? "text-brand-emerald-deep dark:text-[#53c6ac]" : "text-danger-brand"
+                            )}>
+                              {m.net >= 0 ? "+" : "−"}{formatPKR(Math.abs(m.net))}
+                            </span>
+                            <span className="text-[10px] text-ink-soft block">
+                              End: {formatPKR(m.endingBalance)}
+                            </span>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onAddMonthlyAmount(m.month)}
+                            className="h-8 px-2 text-xs font-semibold rounded-xl text-brand-emerald hover:bg-brand-emerald/10"
+                            title="Add amount to this month"
+                          >
+                            <Plus className="size-3.5 mr-0.5" /> Amount
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

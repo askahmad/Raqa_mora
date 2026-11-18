@@ -16,25 +16,57 @@ export async function getAccountsWithBalances(userId: string): Promise<AccountWi
     db.account.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
     db.transaction.findMany({
       where: { userId },
-      select: { type: true, amount: true, signed: true, accountId: true, toAccountId: true },
+      select: { type: true, amount: true, signed: true, accountId: true, toAccountId: true, date: true },
     }),
   ]);
-  return accounts.map((a) => ({
-    id: a.id,
-    name: a.name,
-    type: a.type,
-    color: a.color,
-    icon: a.icon,
-    archived: a.archived,
-    openingBalance: a.openingBalance,
-    balance: a.openingBalance + txns.reduce((sum, t) => {
-      if (t.toAccountId === a.id && t.type === "TRANSFER") return sum + t.amount;
-      if (t.accountId === a.id) return sum + accountDelta(t.type as TxnType, t.amount, t.signed);
-      return sum;
-    }, 0),
-    txnCount: txns.filter((t) => t.accountId === a.id || t.toAccountId === a.id).length,
-    createdAt: a.createdAt.toISOString(),
-  }));
+
+  const nowKarachi = new Date(Date.now() + 5 * 60 * 60 * 1000);
+  const currentMonthKey = nowKarachi.toISOString().slice(0, 7);
+
+  return accounts.map((a) => {
+    let thisMonthInflow = 0;
+    let thisMonthOutflow = 0;
+
+    const balance = a.openingBalance + txns.reduce((sum, t) => {
+      const isFrom = t.accountId === a.id;
+      const isTo = t.toAccountId === a.id;
+      const delta = isTo && t.type === "TRANSFER"
+        ? t.amount
+        : isFrom
+          ? accountDelta(t.type as TxnType, t.amount, t.signed)
+          : 0;
+
+      // Track this month's inflow and outflow for progress tracking
+      if (delta !== 0) {
+        const tMonth = new Date(t.date.getTime() + 5 * 60 * 60 * 1000).toISOString().slice(0, 7);
+        if (tMonth === currentMonthKey) {
+          if (delta > 0) {
+            thisMonthInflow += delta;
+          } else {
+            thisMonthOutflow += Math.abs(delta);
+          }
+        }
+      }
+
+      return sum + delta;
+    }, 0);
+
+    return {
+      id: a.id,
+      name: a.name,
+      type: a.type,
+      color: a.color,
+      icon: a.icon,
+      archived: a.archived,
+      openingBalance: a.openingBalance,
+      balance,
+      txnCount: txns.filter((t) => t.accountId === a.id || t.toAccountId === a.id).length,
+      createdAt: a.createdAt.toISOString(),
+      thisMonthInflow,
+      thisMonthOutflow,
+      thisMonthNet: thisMonthInflow - thisMonthOutflow,
+    };
+  });
 }
 
 export async function getDebtsWithOutstanding(userId: string): Promise<DebtWithOutstanding[]> {
