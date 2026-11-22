@@ -55,6 +55,27 @@ export interface DashboardTranslations {
     budgetStatus: string;
     upcomingBills: string;
   };
+  moneyDistribution: {
+    title: string;
+    subtitle: string;
+    totalFunds: string;
+    cashInHand: string;
+    bankAccounts: string;
+    mobileWallets: string;
+    otherAccounts: string;
+    cashSubtext: string;
+    bankSubtext: string;
+    walletSubtext: string;
+    seeAllAccounts: string;
+  };
+  paymentMethod: {
+    paidFrom: string;
+    depositTo: string;
+    cashLabel: string;
+    bankLabel: string;
+    walletLabel: string;
+    paidWithPrefix: string;
+  };
 }
 
 export interface AccountsTranslations {
@@ -63,6 +84,9 @@ export interface AccountsTranslations {
   newAccount: string;
   transfer: string;
   totalBalance: string;
+  cashLabel: string;
+  bankLabel: string;
+  walletsLabel: string;
   activeWallets: string;
   archivedWallets: string;
   showArchived: string;
@@ -210,6 +234,27 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
         budgetStatus: "Budget Status",
         upcomingBills: "Upcoming Bills & Debts",
       },
+      moneyDistribution: {
+        title: "Where is Your Money? (Cash, Bank & Wallets)",
+        subtitle: "Current live distribution of your funds across cash, banks and mobile accounts",
+        totalFunds: "Total Available Funds",
+        cashInHand: "Cash in Hand",
+        bankAccounts: "Bank Accounts",
+        mobileWallets: "Mobile Wallets",
+        otherAccounts: "Other / Custom",
+        cashSubtext: "Physical cash in wallet / pocket",
+        bankSubtext: "Banks & savings balances",
+        walletSubtext: "Easypaisa, JazzCash, SadaPay",
+        seeAllAccounts: "View all accounts",
+      },
+      paymentMethod: {
+        paidFrom: "Paid Via (Cash or Account):",
+        depositTo: "Deposit Into:",
+        cashLabel: "Cash in Hand",
+        bankLabel: "Bank Account",
+        walletLabel: "Mobile Wallet",
+        paidWithPrefix: "via",
+      },
     },
     accounts: {
       title: "Accounts & Wallets",
@@ -217,6 +262,9 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       newAccount: "New Account",
       transfer: "Transfer",
       totalBalance: "Total Balance Across All Accounts",
+      cashLabel: "Cash in Hand",
+      bankLabel: "Bank Accounts",
+      walletsLabel: "Mobile Wallets",
       activeWallets: "Active Accounts",
       archivedWallets: "Archived Accounts",
       showArchived: "Show Archived",
@@ -347,6 +395,27 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
         budgetStatus: "بجٹ کی صورتحال",
         upcomingBills: "آنے والے بل اور ادھار",
       },
+      moneyDistribution: {
+        title: "آپ کی رقم کہاں ہے؟ (کیش، بینک اور والٹس)",
+        subtitle: "آپ کے پاس موجود کل رقم اور اس کی تقسیم",
+        totalFunds: "کل دستیاب رقم",
+        cashInHand: "جیب میں کیش",
+        bankAccounts: "بینکوں میں رقم",
+        mobileWallets: "موبائل والٹس (ایزی پیسہ / جیز کیش)",
+        otherAccounts: "دیگر اکاؤنٹس",
+        cashSubtext: "بٹوے اور جیب میں کیش",
+        bankSubtext: "بینک اور بچت کھاتے",
+        walletSubtext: "ایزی پیسہ، جیز کیش اور ساداپے",
+        seeAllAccounts: "تمام اکاؤنٹس دیکھیں",
+      },
+      paymentMethod: {
+        paidFrom: "ادائیگی کس سے کی؟ (کیش یا اکاؤنٹ):",
+        depositTo: "رقم کس اکاؤنٹ میں جمع ہوئی؟",
+        cashLabel: "کیش",
+        bankLabel: "بینک اکاؤنٹ",
+        walletLabel: "موبائل والٹ",
+        paidWithPrefix: "سے",
+      },
     },
     accounts: {
       title: "اکاؤنٹس اور والٹس",
@@ -354,6 +423,9 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       newAccount: "نیا اکاؤنٹ بنائیں",
       transfer: "رقم ٹرانسفر کریں",
       totalBalance: "تمام اکاؤنٹس کا کل بیلنس",
+      cashLabel: "جیب میں کیش",
+      bankLabel: "بینک کھاتے",
+      walletsLabel: "موبائل والٹس",
       activeWallets: "فعال اکاؤنٹس",
       archivedWallets: "محفوظ شدہ (آرکائیو) اکاؤنٹس",
       showArchived: "آرکائیو دکھائیں",
@@ -484,6 +556,27 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
         budgetStatus: "Budget Ki Halat",
         upcomingBills: "Aane Walay Bills Aur Udhar",
       },
+      moneyDistribution: {
+        title: "Aap Ki Raqam Kahan Hai? (Cash, Bank aur Wallets)",
+        subtitle: "Aap ke paas mojood kul raqam aur us ka tafseeli hisaab",
+        totalFunds: "Kul Dastyab Raqam",
+        cashInHand: "Jeb Mein Cash",
+        bankAccounts: "Bank Accounts",
+        mobileWallets: "Mobile Wallets",
+        otherAccounts: "Digar Accounts",
+        cashSubtext: "Wallet aur jeb mein mojood cash",
+        bankSubtext: "Bank balance aur bachat",
+        walletSubtext: "Easypaisa aur JazzCash",
+        seeAllAccounts: "Tamam accounts dekhein",
+      },
+      paymentMethod: {
+        paidFrom: "Kis se ada kiya? (Cash ya Account):",
+        depositTo: "Kahan jama hua?",
+        cashLabel: "Cash",
+        bankLabel: "Bank",
+        walletLabel: "Wallet",
+        paidWithPrefix: "se",
+      },
     },
     accounts: {
       title: "Accounts & Wallets",
@@ -491,6 +584,9 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       newAccount: "Naya Account Banayein",
       transfer: "Raqam Transfer Karein",
       totalBalance: "Tamam Accounts Ka Kul Balance",
+      cashLabel: "Jeb Mein Cash",
+      bankLabel: "Bank Accounts",
+      walletsLabel: "Mobile Wallets",
       activeWallets: "Active Accounts",
       archivedWallets: "Archived Accounts",
       showArchived: "Archived Dekhein",

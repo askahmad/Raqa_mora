@@ -653,6 +653,228 @@ function MonthlyRolloverCard({
   );
 }
 
+/* ----------------------------------------------- money distribution card */
+
+interface MoneyDistributionCardProps {
+  accounts: DashboardData["accounts"];
+  totalBalance: number;
+  onViewChange: (view: any) => void;
+}
+
+function MoneyDistributionCard({
+  accounts,
+  totalBalance,
+  onViewChange,
+}: MoneyDistributionCardProps) {
+  const { t, isUrdu } = useLanguage();
+  const activeAccounts = accounts.filter((a) => !a.archived);
+
+  const cashAccounts = activeAccounts.filter((a) => a.type === "CASH");
+  const bankAccounts = activeAccounts.filter((a) => a.type === "BANK" || a.type === "SAVINGS");
+  const walletAccounts = activeAccounts.filter((a) => a.type === "EASYPAISA" || a.type === "JAZZCASH");
+  const otherAccounts = activeAccounts.filter((a) => a.type === "CUSTOM");
+
+  const cashTotal = cashAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const bankTotal = bankAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const walletTotal = walletAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const otherTotal = otherAccounts.reduce((sum, a) => sum + a.balance, 0);
+
+  const positiveTotal = Math.max(0, cashTotal) + Math.max(0, bankTotal) + Math.max(0, walletTotal) + Math.max(0, otherTotal);
+
+  const cashPct = positiveTotal > 0 ? Math.round((Math.max(0, cashTotal) / positiveTotal) * 100) : 0;
+  const bankPct = positiveTotal > 0 ? Math.round((Math.max(0, bankTotal) / positiveTotal) * 100) : 0;
+  const walletPct = positiveTotal > 0 ? Math.round((Math.max(0, walletTotal) / positiveTotal) * 100) : 0;
+  const otherPct = positiveTotal > 0 ? Math.max(0, 100 - (cashPct + bankPct + walletPct)) : 0;
+
+  return (
+    <div
+      dir={isUrdu ? "rtl" : "ltr"}
+      className="relative overflow-hidden rounded-3xl border border-hairline/90 bg-gradient-to-b from-card via-card/95 to-card p-5 sm:p-6 shadow-card space-y-4"
+    >
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline/60 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-9 items-center justify-center rounded-2xl bg-brand-emerald/10 text-brand-emerald">
+            <Banknote className="size-5" />
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-ink">
+              {t.dashboard.moneyDistribution.title}
+            </h3>
+            <p className="text-[11.5px] text-ink-soft">
+              {t.dashboard.moneyDistribution.subtitle}
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onViewChange("accounts")}
+          className="h-8 text-xs rounded-xl font-medium border-hairline hover:bg-muted/60 active:scale-95 transition-transform"
+        >
+          {t.dashboard.moneyDistribution.seeAllAccounts}
+          <ChevronRight className="size-3.5 ml-1" />
+        </Button>
+      </div>
+
+      {/* Visual Multi-Segment Proportion Bar */}
+      {positiveTotal > 0 && (
+        <div className="space-y-1.5">
+          <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted/60 p-0.5">
+            {cashPct > 0 && (
+              <div
+                style={{ width: `${cashPct}%` }}
+                className="bg-emerald-500 rounded-l-full transition-all duration-500"
+                title={`Cash: ${cashPct}%`}
+              />
+            )}
+            {bankPct > 0 && (
+              <div
+                style={{ width: `${bankPct}%` }}
+                className={cn("bg-sky-600 transition-all duration-500", cashPct === 0 && "rounded-l-full")}
+                title={`Bank: ${bankPct}%`}
+              />
+            )}
+            {walletPct > 0 && (
+              <div
+                style={{ width: `${walletPct}%` }}
+                className={cn(
+                  "bg-amber-500 transition-all duration-500",
+                  cashPct === 0 && bankPct === 0 && "rounded-l-full",
+                  otherPct === 0 && "rounded-r-full",
+                )}
+                title={`Wallets: ${walletPct}%`}
+              />
+            )}
+            {otherPct > 0 && (
+              <div
+                style={{ width: `${otherPct}%` }}
+                className="bg-purple-500 rounded-r-full transition-all duration-500"
+                title={`Other: ${otherPct}%`}
+              />
+            )}
+          </div>
+          <div className="flex items-center justify-between text-[11px] text-ink-soft px-1 font-medium">
+            <span>
+              {t.dashboard.moneyDistribution.totalFunds}:{" "}
+              <strong className="text-ink font-bold font-mono">{formatPKR(totalBalance)}</strong>
+            </span>
+            <span className="font-mono text-[10.5px]">100% Live</span>
+          </div>
+        </div>
+      )}
+
+      {/* 3 Liquidity Distribution Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* 1. Cash in Hand */}
+        <div className="group rounded-2xl border border-hairline/70 bg-muted/20 hover:bg-muted/40 p-3.5 transition-all">
+          <div className="flex items-center justify-between gap-1.5 mb-2">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-ink">
+              <span className="flex size-6 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <Banknote className="size-3.5" />
+              </span>
+              {t.dashboard.moneyDistribution.cashInHand}
+            </span>
+            <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10">
+              {cashPct}%
+            </Badge>
+          </div>
+          <div className="text-base sm:text-lg font-extrabold text-ink font-mono">
+            {formatPKR(cashTotal)}
+          </div>
+          <p className="text-[11px] text-ink-soft mt-0.5">
+            {t.dashboard.moneyDistribution.cashSubtext}
+          </p>
+          {cashAccounts.length > 0 && (
+            <div className="mt-2.5 pt-2 border-t border-hairline/60 flex flex-wrap gap-1">
+              {cashAccounts.map((a) => (
+                <span
+                  key={a.id}
+                  className="inline-flex items-center gap-1 rounded-md bg-background px-2 py-0.5 text-[10.5px] text-ink border border-hairline shadow-2xs"
+                >
+                  <span className="size-1.5 rounded-full" style={{ backgroundColor: a.color }} />
+                  <span className="truncate max-w-[80px]">{a.name}:</span>
+                  <span className="font-semibold font-mono">{formatPKR(a.balance)}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 2. Bank Accounts */}
+        <div className="group rounded-2xl border border-hairline/70 bg-muted/20 hover:bg-muted/40 p-3.5 transition-all">
+          <div className="flex items-center justify-between gap-1.5 mb-2">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-ink">
+              <span className="flex size-6 items-center justify-center rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400">
+                <CreditCard className="size-3.5" />
+              </span>
+              {t.dashboard.moneyDistribution.bankAccounts}
+            </span>
+            <Badge variant="outline" className="text-[10px] font-bold border-sky-500/30 text-sky-600 dark:text-sky-400 bg-sky-500/10">
+              {bankPct}%
+            </Badge>
+          </div>
+          <div className="text-base sm:text-lg font-extrabold text-ink font-mono">
+            {formatPKR(bankTotal)}
+          </div>
+          <p className="text-[11px] text-ink-soft mt-0.5">
+            {t.dashboard.moneyDistribution.bankSubtext}
+          </p>
+          {bankAccounts.length > 0 && (
+            <div className="mt-2.5 pt-2 border-t border-hairline/60 flex flex-wrap gap-1">
+              {bankAccounts.map((a) => (
+                <span
+                  key={a.id}
+                  className="inline-flex items-center gap-1 rounded-md bg-background px-2 py-0.5 text-[10.5px] text-ink border border-hairline shadow-2xs"
+                >
+                  <span className="size-1.5 rounded-full" style={{ backgroundColor: a.color }} />
+                  <span className="truncate max-w-[80px]">{a.name}:</span>
+                  <span className="font-semibold font-mono">{formatPKR(a.balance)}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 3. Mobile Wallets */}
+        <div className="group rounded-2xl border border-hairline/70 bg-muted/20 hover:bg-muted/40 p-3.5 transition-all">
+          <div className="flex items-center justify-between gap-1.5 mb-2">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-ink">
+              <span className="flex size-6 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <Wallet className="size-3.5" />
+              </span>
+              {t.dashboard.moneyDistribution.mobileWallets}
+            </span>
+            <Badge variant="outline" className="text-[10px] font-bold border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+              {walletPct}%
+            </Badge>
+          </div>
+          <div className="text-base sm:text-lg font-extrabold text-ink font-mono">
+            {formatPKR(walletTotal)}
+          </div>
+          <p className="text-[11px] text-ink-soft mt-0.5">
+            {t.dashboard.moneyDistribution.walletSubtext}
+          </p>
+          {walletAccounts.length > 0 && (
+            <div className="mt-2.5 pt-2 border-t border-hairline/60 flex flex-wrap gap-1">
+              {walletAccounts.map((a) => (
+                <span
+                  key={a.id}
+                  className="inline-flex items-center gap-1 rounded-md bg-background px-2 py-0.5 text-[10.5px] text-ink border border-hairline shadow-2xs"
+                >
+                  <span className="size-1.5 rounded-full" style={{ backgroundColor: a.color }} />
+                  <span className="truncate max-w-[80px]">{a.name}:</span>
+                  <span className="font-semibold font-mono">{formatPKR(a.balance)}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- skeleton */
 
 function DashboardSkeleton() {
@@ -968,6 +1190,9 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
         <>
           {/* Prominent Monthly Rollover & Funds Engine Card */}
           <MonthlyRolloverCard data={d} onSaved={() => void load(true)} />
+
+          {/* Prominent Cash, Bank & Mobile Wallets Distribution Card */}
+          <MoneyDistributionCard accounts={d.accounts} totalBalance={d.totalBalance} onViewChange={onViewChange} />
 
           {/* ------------------------------------------------ Mobile Fintech Card Layout */}
           <div className="md:hidden space-y-3">

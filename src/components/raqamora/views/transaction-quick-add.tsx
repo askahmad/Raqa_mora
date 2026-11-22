@@ -19,10 +19,12 @@ import {
   ArrowDownRight,
   ArrowLeftRight,
   ArrowUpRight,
+  Banknote,
   Calendar,
   Check,
   ChevronDown,
   ClipboardPaste,
+  CreditCard,
   HandCoins,
   Handshake,
   Mic,
@@ -981,6 +983,82 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
         </div>
       </div>
 
+      {/* -------------------------------- Prominent Payment Method: Cash vs Account Selector */}
+      {req.needsAccount && !req.needsToAccount && (
+        <div className="space-y-1.5 rounded-2xl bg-muted/30 p-2.5 border border-hairline/80">
+          <div className="flex items-center justify-between px-0.5">
+            <Label className="text-[11px] font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+              <CreditCard className="size-3.5 text-brand-emerald" />
+              {type === "INCOME"
+                ? (locale === "en" ? "Deposit Into (Cash or Account):" : locale === "ur" ? "رقم کس اکاؤنٹ میں جمع ہوئی؟" : "Kahan jama hua? (Cash ya Account):")
+                : (locale === "en" ? "Paid Via (Cash or Account):" : locale === "ur" ? "ادائیگی کس سے کی؟ (کیش یا اکاؤنٹ):" : "Kis se ada kiya? (Cash ya Account):")}
+            </Label>
+            {accounts.length > 4 && (
+              <Select
+                value={watchedAccountId ?? ""}
+                onValueChange={(v) => setValue("accountId", v, { shouldValidate: true })}
+              >
+                <SelectTrigger className="h-6 text-[10.5px] border-none bg-transparent hover:bg-muted/60 p-1 w-auto gap-1 text-ink-soft">
+                  <SelectValue placeholder="All Accounts ▾" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64 rounded-2xl">
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: a.color }} />
+                        <span className="truncate">{a.name} ({formatPKR(a.balance)})</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* 1-Tap Quick Account Buttons */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {accounts.slice(0, 4).map((a) => {
+              const active = watchedAccountId === a.id;
+              const isCash = a.type === "CASH";
+              const isWallet = a.type === "EASYPAISA" || a.type === "JAZZCASH";
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setValue("accountId", a.id, { shouldValidate: true })}
+                  className={cn(
+                    "flex items-center justify-between gap-1.5 rounded-xl border p-2 text-left transition-all active:scale-95",
+                    active
+                      ? "border-brand-emerald bg-brand-emerald/10 text-brand-emerald-deep font-bold ring-2 ring-brand-emerald/30 dark:text-[#53c6ac]"
+                      : "border-hairline bg-card hover:bg-muted/50 text-ink",
+                  )}
+                >
+                  <div className="min-w-0 flex items-center gap-1.5">
+                    <span className="text-sm shrink-0">
+                      {isCash ? "💵" : isWallet ? "📱" : "🏦"}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] leading-tight font-semibold">
+                        {a.name}
+                      </p>
+                      <p className="text-[10px] text-ink-soft font-mono leading-tight">
+                        {formatPKR(a.balance)}
+                      </p>
+                    </div>
+                  </div>
+                  {active && <Check className="size-3.5 text-brand-emerald shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+          {errors.accountId && (
+            <p className="text-[11px] font-semibold text-danger-brand" role="alert">
+              {errors.accountId.message}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* -------------------------------- Horizontal Category Icon Badges */}
       {req.needsCategory && (
         <div className="space-y-1">
@@ -1071,61 +1149,6 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
 
       {/* -------------------------------- Contextual Interactive Action Chips */}
       <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-        {/* Account Chip */}
-        {req.needsAccount && !req.needsToAccount && (
-          <Popover open={accountPopoverOpen} onOpenChange={setAccountPopoverOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-card/80 px-3 py-1.5 text-xs font-semibold text-ink hover:bg-card transition-all active:scale-95 shadow-2xs"
-              >
-                <span
-                  className="size-2 rounded-full shrink-0"
-                  style={{ backgroundColor: fromAccount?.color || "#16836f" }}
-                />
-                <span className="truncate max-w-[120px]">
-                  {fromAccount ? fromAccount.name : "Account Chunein"}
-                </span>
-                <ChevronDown className="size-3 text-ink-soft" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-60 p-1.5 rounded-2xl shadow-xl">
-              <div className="space-y-1">
-                <div className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft px-2 py-1">
-                  {type === "INCOME" ? "Deposit Account" : "Paid From Account"}
-                </div>
-                {accounts.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => {
-                      setValue("accountId", a.id, { shouldValidate: true });
-                      setAccountPopoverOpen(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center justify-between rounded-xl px-2.5 py-2 text-xs text-left transition-colors",
-                      watchedAccountId === a.id
-                        ? "bg-brand-emerald/15 text-brand-emerald-deep font-bold"
-                        : "hover:bg-muted text-ink",
-                    )}
-                  >
-                    <span className="flex items-center gap-2 truncate">
-                      <span
-                        className="size-2 rounded-full shrink-0"
-                        style={{ backgroundColor: a.color }}
-                      />
-                      <span className="truncate">{a.name}</span>
-                    </span>
-                    <span className="text-[10.5px] text-ink-soft font-mono">
-                      {formatPKR(a.balance)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-        )}
-
         {/* Date Chip */}
         <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
           <PopoverTrigger asChild>
@@ -1422,9 +1445,17 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
           {submitting
             ? locale === "en" ? "Saving…" : locale === "ur" ? "محفوظ ہو رہا ہے…" : "Save ho raha hai…"
             : type === "EXPENSE"
-              ? `${locale === "en" ? "Save Expense" : locale === "ur" ? "خرچ محفوظ کریں" : "Save Kharcha"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
+              ? `${locale === "en" ? "Save Expense" : locale === "ur" ? "خرچ محفوظ کریں" : "Save Kharcha"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""} ${
+                  fromAccount
+                    ? `(${locale === "ur" ? `${fromAccount.name} سے` : locale === "en" ? `via ${fromAccount.name}` : `${fromAccount.name} se`})`
+                    : ""
+                }`
               : type === "INCOME"
-                ? `${locale === "en" ? "Save Income" : locale === "ur" ? "آمدنی محفوظ کریں" : "Save Aamdani"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
+                ? `${locale === "en" ? "Save Income" : locale === "ur" ? "آمدنی محفوظ کریں" : "Save Aamdani"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""} ${
+                    fromAccount
+                      ? `(${locale === "ur" ? `${fromAccount.name} میں` : locale === "en" ? `into ${fromAccount.name}` : `${fromAccount.name} mein`})`
+                      : ""
+                  }`
                 : type === "TRANSFER"
                   ? `${locale === "en" ? "Transfer Funds" : locale === "ur" ? "رقم ٹرانسفر کریں" : "Transfer Karein"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
                   : type === "LENT"

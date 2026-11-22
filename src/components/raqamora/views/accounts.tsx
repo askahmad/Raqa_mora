@@ -242,6 +242,16 @@ export default function AccountsView(_props: ViewProps) {
   const archivedAccounts = accounts.filter((a) => a.archived);
   const totalBalance = activeAccounts.reduce((sum, a) => sum + a.balance, 0);
 
+  const cashTotal = activeAccounts
+    .filter((a) => a.type === "CASH")
+    .reduce((sum, a) => sum + a.balance, 0);
+  const bankTotal = activeAccounts
+    .filter((a) => a.type === "BANK" || a.type === "SAVINGS")
+    .reduce((sum, a) => sum + a.balance, 0);
+  const walletTotal = activeAccounts
+    .filter((a) => a.type === "EASYPAISA" || a.type === "JAZZCASH")
+    .reduce((sum, a) => sum + a.balance, 0);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -283,6 +293,37 @@ export default function AccountsView(_props: ViewProps) {
               {activeAccounts.length === 1 ? "account" : "accounts"}
               {archivedAccounts.length > 0 ? ` · ${archivedAccounts.length} archived` : ""}
             </p>
+          </div>
+
+          {/* Breakdown: Cash, Bank, Mobile Wallets */}
+          <div className="mt-4 pt-3.5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="flex items-center justify-between sm:flex-col sm:items-start rounded-2xl bg-white/5 border border-white/10 p-2.5">
+              <span className="flex items-center gap-1.5 text-[11px] text-ivory/70 font-medium">
+                <span>💵</span>
+                <span>{t.accounts.cashLabel}</span>
+              </span>
+              <span className="text-sm sm:text-base font-bold text-white font-mono">
+                {formatPKR(cashTotal)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between sm:flex-col sm:items-start rounded-2xl bg-white/5 border border-white/10 p-2.5">
+              <span className="flex items-center gap-1.5 text-[11px] text-ivory/70 font-medium">
+                <span>🏦</span>
+                <span>{t.accounts.bankLabel}</span>
+              </span>
+              <span className="text-sm sm:text-base font-bold text-white font-mono">
+                {formatPKR(bankTotal)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between sm:flex-col sm:items-start rounded-2xl bg-white/5 border border-white/10 p-2.5">
+              <span className="flex items-center gap-1.5 text-[11px] text-ivory/70 font-medium">
+                <span>📱</span>
+                <span>{t.accounts.walletsLabel}</span>
+              </span>
+              <span className="text-sm sm:text-base font-bold text-white font-mono">
+                {formatPKR(walletTotal)}
+              </span>
+            </div>
           </div>
         </div>
       </section>
