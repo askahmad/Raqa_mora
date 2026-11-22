@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Ellipsis,
   History,
+  Lock,
   Pencil,
   Plus,
   SlidersHorizontal,
@@ -832,6 +833,16 @@ function AccountFormDialog({
                 {...form.register("openingBalanceRupees", { valueAsNumber: true })}
               />
             </Field>
+          ) : isEdit && account && account.balance < 0 ? (
+            <div className="rounded-2xl border border-danger-brand/40 bg-danger-brand/10 p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-danger-brand">
+                <Lock className="size-3.5 shrink-0" />
+                <span>Overspent Deficit Locked: {formatPKR(account.balance)}</span>
+              </div>
+              <p className="text-[11px] text-ink-soft leading-relaxed font-medium">
+                Yeh deficit (-{formatPKR(Math.abs(account.balance))}) manually edit nahi ho sakta. Jab is account mein nayi raqam / salary aayegi to yeh wahan se automatically deduct ho kar balance theek karega.
+              </p>
+            </div>
           ) : (
             <Field
               label="Current balance (Rs)"
@@ -1727,15 +1738,33 @@ function AccountMonthlyProgressDialog({
 
               {/* 5-Step Visual Rollover Sequence for this Account */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-stretch">
-                {/* 1. Carried Forward */}
-                <div className="rounded-2xl border border-hairline/80 bg-card p-2.5 shadow-2xs flex flex-col justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft">
-                    1. Carried In
+                {/* 1. Carried Forward / Deficit */}
+                <div
+                  className={cn(
+                    "rounded-2xl border p-2.5 shadow-2xs flex flex-col justify-between",
+                    activeRecord.carriedForward < 0
+                      ? "border-danger-brand/40 bg-danger-brand/10 ring-1 ring-danger-brand/20"
+                      : "border-hairline/80 bg-card",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold uppercase tracking-wider",
+                      activeRecord.carriedForward < 0 ? "text-danger-brand" : "text-ink-soft",
+                    )}
+                  >
+                    1. {activeRecord.carriedForward < 0 ? "Carried Deficit" : "Carried In"}
                   </span>
                   <div className="mt-1.5">
-                    <Money value={activeRecord.carriedForward} size="sm" className="font-bold text-ink" />
+                    <Money
+                      value={activeRecord.carriedForward}
+                      size="sm"
+                      className={cn("font-bold font-mono", activeRecord.carriedForward < 0 ? "text-danger-brand" : "text-ink")}
+                    />
                   </div>
-                  <span className="text-[9.5px] text-ink-soft mt-0.5">Last month balance</span>
+                  <span className="text-[9.5px] text-ink-soft mt-0.5">
+                    {activeRecord.carriedForward < 0 ? "Deducted from funds" : "Last month balance"}
+                  </span>
                 </div>
 
                 {/* 2. Inflow */}
@@ -1744,7 +1773,7 @@ function AccountMonthlyProgressDialog({
                     2. Added (+In)
                   </span>
                   <div className="mt-1.5">
-                    <Money value={activeRecord.inflow} size="sm" className="font-bold text-brand-emerald-deep dark:text-[#53c6ac]" />
+                    <Money value={activeRecord.inflow} size="sm" className="font-bold text-brand-emerald-deep dark:text-[#53c6ac] font-mono" />
                   </div>
                   <span className="text-[9.5px] text-ink-soft mt-0.5">Deposits this month</span>
                 </div>
@@ -1755,9 +1784,11 @@ function AccountMonthlyProgressDialog({
                     3. Available (=)
                   </span>
                   <div className="mt-1.5">
-                    <Money value={activeRecord.available} size="sm" className="font-extrabold text-ink" />
+                    <Money value={activeRecord.available} size="sm" className="font-extrabold text-ink font-mono" />
                   </div>
-                  <span className="text-[9.5px] text-ink-soft mt-0.5">Carried + Added</span>
+                  <span className="text-[9.5px] text-ink-soft mt-0.5">
+                    {activeRecord.carriedForward < 0 && activeRecord.inflow > 0 ? "After deficit deduction" : "Carried + Added"}
+                  </span>
                 </div>
 
                 {/* 4. Outflow */}
@@ -1766,21 +1797,34 @@ function AccountMonthlyProgressDialog({
                     4. Spent (−Out)
                   </span>
                   <div className="mt-1.5">
-                    <Money value={activeRecord.outflow} size="sm" className="font-bold text-danger-brand" />
+                    <Money value={activeRecord.outflow} size="sm" className="font-bold text-danger-brand font-mono" />
                   </div>
                   <span className="text-[9.5px] text-ink-soft mt-0.5">Expenses & bills</span>
                 </div>
 
-                {/* 5. Shifts to next month */}
-                <div className="col-span-2 sm:col-span-1 rounded-2xl border-2 border-brand-emerald bg-brand-emerald/10 p-2.5 shadow-xs flex flex-col justify-between ring-1 ring-brand-emerald/30">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand-emerald-deep dark:text-[#53c6ac]">
-                    5. Shifts Next (➔)
-                  </span>
-                  <div className="mt-1.5">
-                    <Money value={activeRecord.remaining} size="sm" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac]" />
+                {/* 5. Shifts to next month / Deficit */}
+                {activeRecord.remaining < 0 ? (
+                  <div className="col-span-2 sm:col-span-1 rounded-2xl border-2 border-danger-brand bg-danger-brand/10 p-2.5 shadow-xs flex flex-col justify-between ring-1 ring-danger-brand/30">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-danger-brand flex items-center justify-between">
+                      <span>5. Deficit (Kammi)</span>
+                      <Lock className="size-3 text-danger-brand shrink-0" />
+                    </span>
+                    <div className="mt-1.5">
+                      <Money value={activeRecord.remaining} size="sm" className="font-extrabold text-danger-brand font-mono" />
+                    </div>
+                    <span className="text-[9.5px] text-danger-brand font-semibold mt-0.5">🔒 Auto-deducts next</span>
                   </div>
-                  <span className="text-[9.5px] text-brand-emerald font-semibold mt-0.5">Next month balance</span>
-                </div>
+                ) : (
+                  <div className="col-span-2 sm:col-span-1 rounded-2xl border-2 border-brand-emerald bg-brand-emerald/10 p-2.5 shadow-xs flex flex-col justify-between ring-1 ring-brand-emerald/30">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand-emerald-deep dark:text-[#53c6ac]">
+                      5. Shifts Next (➔)
+                    </span>
+                    <div className="mt-1.5">
+                      <Money value={activeRecord.remaining} size="sm" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac] font-mono" />
+                    </div>
+                    <span className="text-[9.5px] text-brand-emerald font-semibold mt-0.5">Next month balance</span>
+                  </div>
+                )}
               </div>
 
               {/* Explainer Rule Box */}

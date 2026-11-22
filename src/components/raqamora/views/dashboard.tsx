@@ -15,6 +15,7 @@ import {
   ChevronRight,
   CreditCard,
   HandCoins,
+  Lock,
   Pencil,
   PiggyBank,
   Plus,
@@ -493,16 +494,43 @@ function MonthlyRolloverCard({
 
       {/* 5-Step Visual Rollover Sequence */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 items-stretch">
-        {/* Step 1: Carried Forward */}
-        <div className="rounded-2xl border border-hairline/80 bg-background/80 p-3 flex flex-col justify-between shadow-2xs">
+        {/* Step 1: Carried Forward / Deficit */}
+        <div
+          className={cn(
+            "rounded-2xl border p-3 flex flex-col justify-between shadow-2xs",
+            mr.carriedForward < 0
+              ? "border-danger-brand/50 bg-danger-brand/10 ring-1 ring-danger-brand/20"
+              : "border-hairline/80 bg-background/80",
+          )}
+        >
           <div>
-            <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft block">
-              1. {t.dashboard.monthlyRolloverCard.carriedFromLastMonth}
+            <span
+              className={cn(
+                "text-[10.5px] font-bold uppercase tracking-wider block",
+                mr.carriedForward < 0 ? "text-danger-brand" : "text-ink-soft",
+              )}
+            >
+              1.{" "}
+              {mr.carriedForward < 0
+                ? isUrdu
+                  ? "پچھلا خسارہ (منہا)"
+                  : "Carried Deficit"
+                : t.dashboard.monthlyRolloverCard.carriedFromLastMonth}
             </span>
-            <p className="text-[10px] text-ink-soft mt-0.5">{mr.previousMonthLabel}</p>
+            <p className="text-[10px] text-ink-soft mt-0.5">
+              {mr.carriedForward < 0
+                ? isUrdu
+                  ? `${mr.previousMonthLabel} (آمدنی سے کٹے گا)`
+                  : `${mr.previousMonthLabel} (Auto-deducted)`
+                : mr.previousMonthLabel}
+            </p>
           </div>
           <div className="mt-2">
-            <Money value={mr.carriedForward} size="md" className="font-bold text-ink" />
+            <Money
+              value={mr.carriedForward}
+              size="md"
+              className={cn("font-bold font-mono", mr.carriedForward < 0 ? "text-danger-brand" : "text-ink")}
+            />
           </div>
         </div>
 
@@ -515,7 +543,7 @@ function MonthlyRolloverCard({
             <p className="text-[10px] text-ink-soft mt-0.5">Inflow</p>
           </div>
           <div className="mt-2">
-            <Money value={mr.thisMonthAdded} size="md" className="font-bold text-money-pos" />
+            <Money value={mr.thisMonthAdded} size="md" className="font-bold text-money-pos font-mono" />
           </div>
         </div>
 
@@ -525,10 +553,16 @@ function MonthlyRolloverCard({
             <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft block">
               3. {t.dashboard.monthlyRolloverCard.totalAvailable}
             </span>
-            <p className="text-[10px] text-ink-soft mt-0.5">Carried + Added</p>
+            <p className="text-[10px] text-ink-soft mt-0.5">
+              {mr.carriedForward < 0 && mr.thisMonthAdded > 0
+                ? isUrdu
+                  ? "خسارہ منہا ہونے کے بعد"
+                  : "After deficit deduction"
+                : "Carried + Added"}
+            </p>
           </div>
           <div className="mt-2">
-            <Money value={mr.totalAvailable} size="md" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac]" />
+            <Money value={mr.totalAvailable} size="md" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac] font-mono" />
           </div>
         </div>
 
@@ -541,31 +575,59 @@ function MonthlyRolloverCard({
             <p className="text-[10px] text-ink-soft mt-0.5">Outflow</p>
           </div>
           <div className="mt-2">
-            <Money value={mr.thisMonthSpent} size="md" className="font-bold text-money-neg" />
+            <Money value={mr.thisMonthSpent} size="md" className="font-bold text-money-neg font-mono" />
           </div>
         </div>
 
-        {/* Step 5: Remaining Rollover (Highlighted) */}
-        <div className="col-span-2 md:col-span-1 rounded-2xl border-2 border-brand-emerald bg-brand-emerald/10 p-3 flex flex-col justify-between shadow-xs ring-2 ring-brand-emerald/20">
-          <div>
-            <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-brand-emerald-deep dark:text-[#53c6ac] block">
-              5. {t.dashboard.monthlyRolloverCard.remainingForNextMonth}
-            </span>
-            <p className="text-[10px] text-brand-emerald font-semibold mt-0.5">
-              ➔ Shifts to {mr.nextMonthLabel}
-            </p>
+        {/* Step 5: Remaining Rollover / Overspent Deficit */}
+        {mr.remaining < 0 ? (
+          <div className="col-span-2 md:col-span-1 rounded-2xl border-2 border-danger-brand bg-danger-brand/10 p-3 flex flex-col justify-between shadow-xs ring-2 ring-danger-brand/20">
+            <div>
+              <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-danger-brand flex items-center justify-between">
+                <span>5. {isUrdu ? "اوور اسپینڈ / خسارہ" : "Overspent Deficit"}</span>
+                <Lock className="size-3 text-danger-brand shrink-0" />
+              </span>
+              <p className="text-[10px] text-danger-brand font-semibold mt-0.5">
+                🔒 {isUrdu ? "رقم آتے ہی منہا ہوگا" : "Locked • Auto-deducts on deposit"}
+              </p>
+            </div>
+            <div className="mt-2">
+              <Money value={mr.remaining} size="lg" className="font-extrabold text-danger-brand text-lg sm:text-xl font-mono" />
+            </div>
           </div>
-          <div className="mt-2">
-            <Money value={mr.remaining} size="lg" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac] text-lg sm:text-xl" />
+        ) : (
+          <div className="col-span-2 md:col-span-1 rounded-2xl border-2 border-brand-emerald bg-brand-emerald/10 p-3 flex flex-col justify-between shadow-xs ring-2 ring-brand-emerald/20">
+            <div>
+              <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-brand-emerald-deep dark:text-[#53c6ac] block">
+                5. {t.dashboard.monthlyRolloverCard.remainingForNextMonth}
+              </span>
+              <p className="text-[10px] text-brand-emerald font-semibold mt-0.5">
+                ➔ Shifts to {mr.nextMonthLabel}
+              </p>
+            </div>
+            <div className="mt-2">
+              <Money value={mr.remaining} size="lg" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac] text-lg sm:text-xl font-mono" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Clear Explainer Rule */}
-      <div className="rounded-2xl bg-muted/40 border border-hairline/60 p-2.5 sm:p-3 text-xs text-ink-soft flex items-start gap-2">
-        <span className="text-sm">💡</span>
-        <p className="leading-relaxed">
-          {t.dashboard.monthlyRolloverCard.exampleExplainer}
+      <div
+        className={cn(
+          "rounded-2xl border p-2.5 sm:p-3 text-xs flex items-start gap-2",
+          mr.remaining < 0
+            ? "border-danger-brand/40 bg-danger-brand/10 text-danger-brand"
+            : "border-hairline/60 bg-muted/40 text-ink-soft",
+        )}
+      >
+        <span className="text-sm shrink-0">{mr.remaining < 0 ? "⚠️" : "💡"}</span>
+        <p className="leading-relaxed font-medium">
+          {mr.remaining < 0
+            ? isUrdu
+              ? `آپ نے دستیاب رقم سے ${formatPKR(Math.abs(mr.remaining))} زیادہ خرچ کر لیے ہیں۔ یہ خسارہ (-${formatPKR(Math.abs(mr.remaining))}) لاکڈ ہے اور تبدیل نہیں ہو سکتا۔ جیسے ہی اکاؤنٹ میں نئی رقم یا تنخواہ آئے گی، یہ وہاں سے خود بخود منہا (Deduct) ہو جائے گا۔`
+              : `Aap ne mojooda raqam se ${formatPKR(Math.abs(mr.remaining))} zyada kharch kiye hain. Yeh -${formatPKR(Math.abs(mr.remaining))} deficit locked hai aur edit nahi ho sakta; jese hi account mein aamdani ya salary aayegi, yeh wahan se automatically deduct ho jayega.`
+            : t.dashboard.monthlyRolloverCard.exampleExplainer}
         </p>
       </div>
 
