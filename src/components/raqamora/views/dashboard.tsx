@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Banknote,
   CalendarDays,
+  Check,
   ChevronRight,
   CreditCard,
   HandCoins,
@@ -50,7 +51,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatPKR, parseRupeesToPaisa } from "@/lib/raqamora/money";
 import { accountDelta, TXN_TYPE_LABELS, type TxnType } from "@/lib/raqamora/finance";
-import type { DashboardData, SessionUser, TxnRow } from "@/lib/raqamora/types";
+import type { AccountWithBalance, DashboardData, SessionUser, TxnRow } from "@/lib/raqamora/types";
 import { ApiError, apiGet, apiSend } from "@/lib/raqamora/client";
 import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { useLanguage } from "@/lib/raqamora/i18n";
@@ -407,13 +408,14 @@ function MonthlyRolloverCard({
   data: DashboardData;
   onSaved: () => void;
 }) {
-  const { t, isUrdu } = useLanguage();
+  const { t, isUrdu, locale } = useLanguage();
   const mr = data.monthlyRollover;
   const accounts = data.accounts.filter((a) => !a.archived);
+  const cashAccount = accounts.find((a) => a.type === "CASH");
 
   const [amount, setAmount] = React.useState("");
   const [selectedAccountId, setSelectedAccountId] = React.useState<string>(
-    accounts[0]?.id ?? "",
+    accounts[0]?.id ?? "__NEW_CASH__",
   );
   const [saving, setSaving] = React.useState(false);
 
@@ -439,10 +441,22 @@ function MonthlyRolloverCard({
 
     setSaving(true);
     try {
+      let targetAccountId = selectedAccountId;
+      if (targetAccountId === "__NEW_CASH__") {
+        const createdAcc = await apiSend<{ account: AccountWithBalance }>("/api/accounts", "POST", {
+          name: isUrdu ? "کیش" : "Cash in Hand",
+          type: "CASH",
+          openingBalanceRupees: 0,
+          color: "#16836F",
+          icon: "banknote",
+        });
+        targetAccountId = createdAcc.account.id;
+      }
+
       await apiSend("/api/transactions", "POST", {
         type: "INCOME",
         amountRupees: val,
-        accountId: selectedAccountId,
+        accountId: targetAccountId,
         date: new Date().toISOString(),
         note: `Monthly Funds / Budget (${mr.monthLabel})`,
       });
@@ -457,6 +471,15 @@ function MonthlyRolloverCard({
       setSaving(false);
     }
   }
+
+  const selectedAccountObj = accounts.find((a) => a.id === selectedAccountId);
+  const depositTargetLabel = selectedAccountId === "__NEW_CASH__"
+    ? (isUrdu ? "کیش میں" : locale === "en" ? "in Cash" : "Cash mein")
+    : selectedAccountObj?.type === "CASH"
+      ? (isUrdu ? "کیش میں" : locale === "en" ? "in Cash" : "Cash mein")
+      : selectedAccountObj
+        ? (isUrdu ? `${selectedAccountObj.name} میں` : locale === "en" ? `in ${selectedAccountObj.name}` : `${selectedAccountObj.name} mein`)
+        : (isUrdu ? "کیش میں" : "Cash mein");
 
   const pills = [5000, 10000, 25000, 50000, 100000];
 
@@ -632,7 +655,7 @@ function MonthlyRolloverCard({
       </div>
 
       {/* Inline Fast Add Monthly Amount Card */}
-      <div className="rounded-2xl border border-hairline bg-card p-3.5 space-y-2.5">
+      <div className="rounded-2xl border border-hairline bg-card p-3.5 sm:p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <span className="text-xs font-bold text-ink flex items-center gap-1.5">
             <Pencil className="size-3.5 text-brand-emerald" />
@@ -643,25 +666,110 @@ function MonthlyRolloverCard({
           </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {/* Account Selector if multiple accounts */}
-          {accounts.length > 1 && (
-            <div className="w-full sm:w-44 shrink-0">
+        {/* Dedicated Account / Cash Destination Selector */}
+        <div className="space-y-1.5 rounded-xl bg-muted/30 p-2.5 border border-hairline/70">
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+              <CreditCard className="size-3.5 text-brand-emerald" />
+              <span>
+                {isUrdu
+                  ? "رقم کس میں جمع کرنی ہے؟ (کیش یا اکاؤنٹ):"
+                  : locale === "en"
+                    ? "Deposit Into (Cash or Account):"
+                    : "Kahan jama karna hai? (Cash ya Account):"}
+              </span>
+            </span>
+            {accounts.length > 3 && (
               <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-                <SelectTrigger className="h-10 text-xs font-semibold rounded-xl bg-background">
-                  <SelectValue placeholder={t.dashboard.monthlyRolloverCard.selectAccount} />
+                <SelectTrigger className="h-6 text-[10.5px] border-none bg-transparent hover:bg-muted/60 p-1 w-auto gap-1 text-ink-soft">
+                  <SelectValue placeholder="All Accounts ▾" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-64 rounded-2xl">
                   {accounts.map((a) => (
-                    <SelectItem key={a.id} value={a.id} className="text-xs">
-                      {a.name} ({formatPKR(a.balance)})
+                    <SelectItem key={a.id} value={a.id}>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: a.color }} />
+                        <span className="truncate">{a.name} ({formatPKR(a.balance)})</span>
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          )}
+            )}
+          </div>
 
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {/* 1. Cash in Hand 1-Tap Option */}
+            <button
+              type="button"
+              onClick={() => {
+                if (cashAccount) {
+                  setSelectedAccountId(cashAccount.id);
+                } else {
+                  setSelectedAccountId("__NEW_CASH__");
+                }
+              }}
+              className={cn(
+                "flex items-center justify-between gap-1.5 rounded-xl border p-2 text-left transition-all active:scale-95",
+                (cashAccount && selectedAccountId === cashAccount.id) || (!cashAccount && selectedAccountId === "__NEW_CASH__")
+                  ? "border-brand-emerald bg-brand-emerald/10 text-brand-emerald-deep font-bold ring-2 ring-brand-emerald/30 dark:text-[#53c6ac]"
+                  : "border-hairline bg-card hover:bg-muted/50 text-ink",
+              )}
+            >
+              <div className="min-w-0 flex items-center gap-1.5">
+                <span className="text-sm shrink-0">💵</span>
+                <div className="min-w-0">
+                  <p className="truncate text-[11px] leading-tight font-semibold">
+                    {cashAccount ? cashAccount.name : (isUrdu ? "کیش (جیب میں)" : "Cash in Hand")}
+                  </p>
+                  <p className="text-[10px] text-ink-soft font-mono leading-tight">
+                    {cashAccount ? formatPKR(cashAccount.balance) : (isUrdu ? "کیش رقم" : "Cash")}
+                  </p>
+                </div>
+              </div>
+              {((cashAccount && selectedAccountId === cashAccount.id) || (!cashAccount && selectedAccountId === "__NEW_CASH__")) && (
+                <Check className="size-3.5 text-brand-emerald shrink-0" />
+              )}
+            </button>
+
+            {/* 2. Bank / Wallet Accounts */}
+            {accounts.filter((a) => a.type !== "CASH").slice(0, 3).map((a) => {
+              const active = selectedAccountId === a.id;
+              const isWallet = a.type === "EASYPAISA" || a.type === "JAZZCASH";
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setSelectedAccountId(a.id)}
+                  className={cn(
+                    "flex items-center justify-between gap-1.5 rounded-xl border p-2 text-left transition-all active:scale-95",
+                    active
+                      ? "border-brand-emerald bg-brand-emerald/10 text-brand-emerald-deep font-bold ring-2 ring-brand-emerald/30 dark:text-[#53c6ac]"
+                      : "border-hairline bg-card hover:bg-muted/50 text-ink",
+                  )}
+                >
+                  <div className="min-w-0 flex items-center gap-1.5">
+                    <span className="text-sm shrink-0">
+                      {isWallet ? "📱" : "🏦"}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] leading-tight font-semibold">
+                        {a.name}
+                      </p>
+                      <p className="text-[10px] text-ink-soft font-mono leading-tight">
+                        {formatPKR(a.balance)}
+                      </p>
+                    </div>
+                  </div>
+                  {active && <Check className="size-3.5 text-brand-emerald shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Amount Input Row with Dynamic Target CTA */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {/* Amount input */}
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">Rs</span>
@@ -671,18 +779,20 @@ function MonthlyRolloverCard({
               placeholder={t.dashboard.monthlyRolloverCard.easyAddPlaceholder}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="pl-9 h-10 text-sm font-bold bg-background rounded-xl"
+              className="pl-9 h-11 text-sm font-bold bg-background rounded-xl"
             />
           </div>
 
-          {/* Big Add Button */}
+          {/* Big Add Button with dynamic Account/Cash name */}
           <Button
             type="button"
             onClick={handleAddMonthlyFunds}
             disabled={!amount || Number(amount) <= 0 || saving}
-            className="h-10 px-5 rounded-xl font-bold bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white active:scale-95 shadow-md shadow-emerald-600/20 shrink-0"
+            className="h-11 px-5 rounded-xl font-bold bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white active:scale-95 shadow-md shadow-emerald-600/20 shrink-0"
           >
-            {saving ? t.dashboard.monthlyRolloverCard.saving : t.dashboard.monthlyRolloverCard.addBtn}
+            {saving
+              ? t.dashboard.monthlyRolloverCard.saving
+              : `${t.dashboard.monthlyRolloverCard.addBtn} (${depositTargetLabel})`}
           </Button>
         </div>
 
