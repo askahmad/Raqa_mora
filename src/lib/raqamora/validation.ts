@@ -71,8 +71,6 @@ export const transactionSchema = z
       if (v.accountId && v.accountId === v.toAccountId)
         ctx.addIssue({ code: "custom", message: "Source and destination must differ", path: ["toAccountId"] });
     }
-    if ((t === "INCOME" || t === "EXPENSE" || t === "REFUND") && !v.categoryId)
-      ctx.addIssue({ code: "custom", message: "Category is required", path: ["categoryId"] });
     if (["LENT", "BORROWED", "REPAYMENT_RECEIVED", "REPAYMENT_MADE"].includes(t) && !v.personId)
       ctx.addIssue({ code: "custom", message: "Person is required", path: ["personId"] });
     if (t === "ADJUSTMENT" && !v.reason?.trim())

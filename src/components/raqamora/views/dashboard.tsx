@@ -1047,33 +1047,33 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
     trend?: { label: string; positive: boolean } | null;
     sub?: string;
   }> = [
-    {
-      key: "balance",
-      label: t.dashboard.totalBalance,
-      icon: Wallet,
-      value: d.totalBalance,
-      sub:
-        d.accounts.length > 0
-          ? `Across ${d.accounts.length} account${d.accounts.length === 1 ? "" : "s"}`
-          : "No accounts yet",
-    },
-    { key: "income", label: t.dashboard.statCards.income, icon: Banknote, value: d.summary.income, trend: incomeTrend },
-    {
-      key: "expense",
-      label: t.dashboard.statCards.expense,
-      icon: Receipt,
-      value: d.summary.netExpense,
-      trend: expenseTrend,
-      sub: d.summary.refunds > 0 ? `${formatPKR(d.summary.refunds)} refunded` : undefined,
-    },
-    {
-      key: "netpos",
-      label: t.dashboard.statCards.netPosition,
-      icon: Scale,
-      value: d.netPosition,
-      sub: "Cash + receivables − payables",
-    },
-  ];
+      {
+        key: "balance",
+        label: t.dashboard.totalBalance,
+        icon: Wallet,
+        value: d.totalBalance,
+        sub:
+          d.accounts.length > 0
+            ? `Across ${d.accounts.length} account${d.accounts.length === 1 ? "" : "s"}`
+            : "No accounts yet",
+      },
+      { key: "income", label: t.dashboard.statCards.income, icon: Banknote, value: d.summary.income, trend: incomeTrend },
+      {
+        key: "expense",
+        label: t.dashboard.statCards.expense,
+        icon: Receipt,
+        value: d.summary.netExpense,
+        trend: expenseTrend,
+        sub: d.summary.refunds > 0 ? `${formatPKR(d.summary.refunds)} refunded` : undefined,
+      },
+      {
+        key: "netpos",
+        label: t.dashboard.statCards.netPosition,
+        icon: Scale,
+        value: d.netPosition,
+        sub: "Cash + receivables − payables",
+      },
+    ];
 
   return (
     <div className="space-y-4">

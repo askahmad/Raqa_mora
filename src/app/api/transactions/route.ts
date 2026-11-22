@@ -98,6 +98,29 @@ export async function POST(req: NextRequest) {
     const signed = data.type === "ADJUSTMENT" ? (data.adjustDirection === "DECREASE" ? -1 : 1) : 1;
     const reason = data.type === "ADJUSTMENT" ? (data.reason?.trim() || "Adjustment") : null;
 
+    // Gracefully auto-assign default category if omitted (e.g. Monthly Salary/Funds, Quick Entries)
+    let finalCategoryId = data.type === "TRANSFER" ? null : data.categoryId ?? null;
+    if (!finalCategoryId && (data.type === "INCOME" || data.type === "EXPENSE" || data.type === "REFUND")) {
+      const targetKind = data.type === "INCOME" ? "INCOME" : "EXPENSE";
+      const defaultCat = await db.category.findFirst({
+        where: { userId: session.id, kind: targetKind, archived: false },
+        orderBy: { createdAt: "asc" },
+      });
+      if (defaultCat) {
+        finalCategoryId = defaultCat.id;
+      } else {
+        const newCat = await db.category.create({
+          data: {
+            userId: session.id,
+            name: targetKind === "INCOME" ? "Salary & Income" : "General Expense",
+            kind: targetKind,
+            icon: targetKind === "INCOME" ? "briefcase" : "shopping-basket",
+          },
+        });
+        finalCategoryId = newCat.id;
+      }
+    }
+
     const created = await db.transaction.create({
       data: {
         userId: session.id,
@@ -109,7 +132,7 @@ export async function POST(req: NextRequest) {
         reason,
         accountId: data.accountId ?? null,
         toAccountId: data.type === "TRANSFER" ? data.toAccountId : null,
-        categoryId: data.type === "TRANSFER" ? null : data.categoryId ?? null,
+        categoryId: finalCategoryId,
         personId: data.personId ?? null,
         debtId: data.debtId ?? null,
       },
