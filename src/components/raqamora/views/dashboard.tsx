@@ -15,6 +15,7 @@ import {
   ChevronRight,
   CreditCard,
   HandCoins,
+  Pencil,
   PiggyBank,
   Plus,
   Receipt,
@@ -46,11 +47,12 @@ import {
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { formatPKR } from "@/lib/raqamora/money";
+import { formatPKR, parseRupeesToPaisa } from "@/lib/raqamora/money";
 import { accountDelta, TXN_TYPE_LABELS, type TxnType } from "@/lib/raqamora/finance";
 import type { DashboardData, SessionUser, TxnRow } from "@/lib/raqamora/types";
-import { ApiError, apiGet } from "@/lib/raqamora/client";
+import { ApiError, apiGet, apiSend } from "@/lib/raqamora/client";
 import { getCachedGet } from "@/lib/raqamora/offline-sync";
+import { useLanguage } from "@/lib/raqamora/i18n";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +61,13 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DemoButton,
   EmptyState,
@@ -388,6 +397,262 @@ function FirstRunHero({
   );
 }
 
+/* -------------------------------------------------------- rollover card */
+
+function MonthlyRolloverCard({
+  data,
+  onSaved,
+}: {
+  data: DashboardData;
+  onSaved: () => void;
+}) {
+  const { t, isUrdu } = useLanguage();
+  const mr = data.monthlyRollover;
+  const accounts = data.accounts.filter((a) => !a.archived);
+
+  const [amount, setAmount] = React.useState("");
+  const [selectedAccountId, setSelectedAccountId] = React.useState<string>(
+    accounts[0]?.id ?? "",
+  );
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!selectedAccountId && accounts.length > 0) {
+      setSelectedAccountId(accounts[0].id);
+    }
+  }, [accounts, selectedAccountId]);
+
+  if (!mr) return null;
+
+  async function handleAddMonthlyFunds() {
+    if (!mr) return;
+    const val = Number(amount);
+    if (!val || val <= 0) {
+      toast.error(isUrdu ? "درست رقم درج کریں" : "Please enter a valid amount");
+      return;
+    }
+    if (!selectedAccountId) {
+      toast.error(isUrdu ? "اکاؤنٹ منتخب کریں" : "Please select an account");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await apiSend("/api/transactions", "POST", {
+        type: "INCOME",
+        amountRupees: val,
+        accountId: selectedAccountId,
+        date: new Date().toISOString(),
+        note: `Monthly Funds / Budget (${mr.monthLabel})`,
+      });
+
+      toast.success(t.dashboard.monthlyRolloverCard.successAdded);
+      setAmount("");
+      window.dispatchEvent(new Event("raqamora:txn-changed"));
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not add monthly funds");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const pills = [5000, 10000, 25000, 50000, 100000];
+
+  return (
+    <div className="rounded-3xl border border-brand-emerald/30 bg-gradient-to-br from-card via-card to-brand-emerald/5 p-4 sm:p-5 shadow-sm space-y-4">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-hairline/60 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-2xl bg-brand-emerald/15 text-brand-emerald-deep dark:text-[#53c6ac] ring-1 ring-brand-emerald/20">
+            <PiggyBank className="size-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-ink">
+                {t.dashboard.monthlyRolloverCard.title}
+              </h2>
+              <Badge variant="outline" className="text-[10px] px-2 py-0 border-brand-emerald/40 text-brand-emerald font-semibold uppercase">
+                {mr.monthLabel}
+              </Badge>
+            </div>
+            <p className="text-xs text-ink-soft">
+              {t.dashboard.monthlyRolloverCard.subtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Active Badge */}
+        <div className="text-[11px] text-ink-soft bg-muted/60 px-3 py-1.5 rounded-xl border border-hairline flex items-center gap-1.5 self-start sm:self-auto">
+          <Sparkles className="size-3.5 text-gold shrink-0" />
+          <span className="font-semibold text-brand-emerald-deep dark:text-[#53c6ac]">
+            {mr.monthLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* 5-Step Visual Rollover Sequence */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 items-stretch">
+        {/* Step 1: Carried Forward */}
+        <div className="rounded-2xl border border-hairline/80 bg-background/80 p-3 flex flex-col justify-between shadow-2xs">
+          <div>
+            <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft block">
+              1. {t.dashboard.monthlyRolloverCard.carriedFromLastMonth}
+            </span>
+            <p className="text-[10px] text-ink-soft mt-0.5">{mr.previousMonthLabel}</p>
+          </div>
+          <div className="mt-2">
+            <Money value={mr.carriedForward} size="md" className="font-bold text-ink" />
+          </div>
+        </div>
+
+        {/* Step 2: Added This Month */}
+        <div className="rounded-2xl border border-hairline/80 bg-background/80 p-3 flex flex-col justify-between shadow-2xs">
+          <div>
+            <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft block">
+              2. {t.dashboard.monthlyRolloverCard.addedThisMonth}
+            </span>
+            <p className="text-[10px] text-ink-soft mt-0.5">Inflow</p>
+          </div>
+          <div className="mt-2">
+            <Money value={mr.thisMonthAdded} size="md" className="font-bold text-money-pos" />
+          </div>
+        </div>
+
+        {/* Step 3: Total Available */}
+        <div className="rounded-2xl border border-hairline/80 bg-background/80 p-3 flex flex-col justify-between shadow-2xs">
+          <div>
+            <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft block">
+              3. {t.dashboard.monthlyRolloverCard.totalAvailable}
+            </span>
+            <p className="text-[10px] text-ink-soft mt-0.5">Carried + Added</p>
+          </div>
+          <div className="mt-2">
+            <Money value={mr.totalAvailable} size="md" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac]" />
+          </div>
+        </div>
+
+        {/* Step 4: Spent */}
+        <div className="rounded-2xl border border-hairline/80 bg-background/80 p-3 flex flex-col justify-between shadow-2xs">
+          <div>
+            <span className="text-[10.5px] font-bold uppercase tracking-wider text-ink-soft block">
+              4. {t.dashboard.monthlyRolloverCard.spentThisMonth}
+            </span>
+            <p className="text-[10px] text-ink-soft mt-0.5">Outflow</p>
+          </div>
+          <div className="mt-2">
+            <Money value={mr.thisMonthSpent} size="md" className="font-bold text-money-neg" />
+          </div>
+        </div>
+
+        {/* Step 5: Remaining Rollover (Highlighted) */}
+        <div className="col-span-2 md:col-span-1 rounded-2xl border-2 border-brand-emerald bg-brand-emerald/10 p-3 flex flex-col justify-between shadow-xs ring-2 ring-brand-emerald/20">
+          <div>
+            <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-brand-emerald-deep dark:text-[#53c6ac] block">
+              5. {t.dashboard.monthlyRolloverCard.remainingForNextMonth}
+            </span>
+            <p className="text-[10px] text-brand-emerald font-semibold mt-0.5">
+              ➔ Shifts to {mr.nextMonthLabel}
+            </p>
+          </div>
+          <div className="mt-2">
+            <Money value={mr.remaining} size="lg" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac] text-lg sm:text-xl" />
+          </div>
+        </div>
+      </div>
+
+      {/* Clear Explainer Rule */}
+      <div className="rounded-2xl bg-muted/40 border border-hairline/60 p-2.5 sm:p-3 text-xs text-ink-soft flex items-start gap-2">
+        <span className="text-sm">💡</span>
+        <p className="leading-relaxed">
+          {t.dashboard.monthlyRolloverCard.exampleExplainer}
+        </p>
+      </div>
+
+      {/* Inline Fast Add Monthly Amount Card */}
+      <div className="rounded-2xl border border-hairline bg-card p-3.5 space-y-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <span className="text-xs font-bold text-ink flex items-center gap-1.5">
+            <Pencil className="size-3.5 text-brand-emerald" />
+            <span>{t.dashboard.monthlyRolloverCard.easyAddTitle}</span>
+          </span>
+          <span className="text-[11px] text-ink-soft">
+            For Month: <strong>{mr.monthLabel}</strong>
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Account Selector if multiple accounts */}
+          {accounts.length > 1 && (
+            <div className="w-full sm:w-44 shrink-0">
+              <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                <SelectTrigger className="h-10 text-xs font-semibold rounded-xl bg-background">
+                  <SelectValue placeholder={t.dashboard.monthlyRolloverCard.selectAccount} />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id} className="text-xs">
+                      {a.name} ({formatPKR(a.balance)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Amount input */}
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">Rs</span>
+            <Input
+              type="number"
+              inputMode="decimal"
+              placeholder={t.dashboard.monthlyRolloverCard.easyAddPlaceholder}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="pl-9 h-10 text-sm font-bold bg-background rounded-xl"
+            />
+          </div>
+
+          {/* Big Add Button */}
+          <Button
+            type="button"
+            onClick={handleAddMonthlyFunds}
+            disabled={!amount || Number(amount) <= 0 || saving}
+            className="h-10 px-5 rounded-xl font-bold bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white active:scale-95 shadow-md shadow-emerald-600/20 shrink-0"
+          >
+            {saving ? t.dashboard.monthlyRolloverCard.saving : t.dashboard.monthlyRolloverCard.addBtn}
+          </Button>
+        </div>
+
+        {/* Quick Increment Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          <span className="text-[10.5px] text-ink-soft mr-1">Quick:</span>
+          {pills.map((val) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => {
+                const cur = Number(amount) || 0;
+                setAmount((cur + val).toString());
+              }}
+              className="rounded-full border border-hairline/80 px-2.5 py-0.5 text-[10.5px] font-medium text-ink-soft hover:bg-muted/80 active:scale-95 transition-all bg-background"
+            >
+              +{val.toLocaleString()}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setAmount("")}
+            className="rounded-full border border-hairline/80 px-2.5 py-0.5 text-[10.5px] font-medium text-ink-soft hover:bg-muted/80 active:scale-95 transition-all"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- skeleton */
 
 function DashboardSkeleton() {
@@ -418,6 +683,7 @@ function DashboardSkeleton() {
 
 export default function DashboardView({ user, onViewChange }: ViewProps) {
   const { setUser, handleUnauthorized } = useApp();
+  const { t, isUrdu } = useLanguage();
   const reduced = useReducedMotion();
 
   const [rangeKey, setRangeKey] = React.useState<RangeKey>("month");
@@ -502,7 +768,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
   if (loading && !data) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Dashboard" description="Your money at a glance" />
+        <PageHeader title={t.dashboard.totalBalance} description={t.dashboard.financialSummary} />
         <DashboardSkeleton />
       </div>
     );
@@ -511,7 +777,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
   if (error && !data) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Dashboard" description="Your money at a glance" />
+        <PageHeader title={t.dashboard.totalBalance} description={t.dashboard.financialSummary} />
         <EmptyState
           icon={TriangleAlert}
           title="Could not load your dashboard"
@@ -561,7 +827,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
   }> = [
     {
       key: "balance",
-      label: "Available balance",
+      label: t.dashboard.totalBalance,
       icon: Wallet,
       value: d.totalBalance,
       sub:
@@ -569,10 +835,10 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
           ? `Across ${d.accounts.length} account${d.accounts.length === 1 ? "" : "s"}`
           : "No accounts yet",
     },
-    { key: "income", label: "Income", icon: Banknote, value: d.summary.income, trend: incomeTrend },
+    { key: "income", label: t.dashboard.statCards.income, icon: Banknote, value: d.summary.income, trend: incomeTrend },
     {
       key: "expense",
-      label: "Net expenses",
+      label: t.dashboard.statCards.expense,
       icon: Receipt,
       value: d.summary.netExpense,
       trend: expenseTrend,
@@ -580,7 +846,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
     },
     {
       key: "netpos",
-      label: "Net position",
+      label: t.dashboard.statCards.netPosition,
       icon: Scale,
       value: d.netPosition,
       sub: "Cash + receivables − payables",
@@ -592,13 +858,13 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
       {/* ------------------------------------------------ Header & Period Selector */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-ink">
-            Assalam-o-Alaikum, {user.name.split(" ")[0]}
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-ink font-heading">
+            {t.dashboard.greeting}, {user.name.split(" ")[0]}
           </h1>
           <p className="text-xs text-ink-soft">
-            {d.period.label === "Custom Range" && customApplied
+            {d.monthlyRollover?.monthLabel ?? (d.period.label === "Custom Range" && customApplied
               ? `${fmtDayFull(d.period.from)} – ${fmtDayFull(d.period.to)}`
-              : d.period.label} · Financial Summary
+              : d.period.label)} · {t.dashboard.financialSummary}
           </p>
         </div>
 
@@ -627,8 +893,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                   />
                 )}
                 <span className="relative z-10 whitespace-nowrap">
-                  <span className="sm:hidden">{opt.shortLabel}</span>
-                  <span className="hidden sm:inline">{opt.label}</span>
+                  {t.dashboard.tabs[opt.key] ?? opt.label}
                 </span>
               </button>
             ))}
@@ -656,13 +921,13 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                   )}
                   <span className="relative z-10 flex items-center justify-center gap-1 whitespace-nowrap">
                     <CalendarDays className="size-3 shrink-0" aria-hidden />
-                    <span>Custom</span>
+                    <span>{t.dashboard.tabs.custom}</span>
                   </span>
                 </button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-72 rounded-2xl">
                 <div className="grid gap-3">
-                  <p className="text-sm font-semibold text-ink">Custom range</p>
+                  <p className="text-sm font-semibold text-ink">{t.dashboard.tabs.custom}</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="grid gap-1.5">
                       <Label htmlFor="rq-dash-from">From</Label>
@@ -701,6 +966,9 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
         <FirstRunHero onAddAccount={() => onViewChange("accounts")} onDemo={(u) => setUser(u)} />
       ) : (
         <>
+          {/* Prominent Monthly Rollover & Funds Engine Card */}
+          <MonthlyRolloverCard data={d} onSaved={() => void load(true)} />
+
           {/* ------------------------------------------------ Mobile Fintech Card Layout */}
           <div className="md:hidden space-y-3">
             {/* Luxury Metal Wallet Card */}
@@ -711,7 +979,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
 
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-ivory/60">
-                  Total Available Balance
+                  {t.dashboard.totalBalance}
                 </span>
                 <span className="flex size-7 items-center justify-center rounded-xl bg-white/10 text-gold border border-white/10">
                   <Wallet className="size-3.5" aria-hidden />
@@ -735,7 +1003,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                   onClick={() => window.dispatchEvent(new Event("raqamora:quick-add"))}
                 >
                   <Plus className="size-3.5 mr-1" aria-hidden />
-                  Add Entry
+                  {t.quickAdd}
                 </Button>
                 <Button
                   variant="outline"
@@ -744,7 +1012,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                   onClick={() => onViewChange("accounts")}
                 >
                   <Wallet className="size-3.5 mr-1 text-ivory/70" aria-hidden />
-                  Accounts
+                  {t.nav.accounts}
                 </Button>
                 <Button
                   variant="outline"
@@ -753,7 +1021,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
                   onClick={() => onViewChange("debts")}
                 >
                   <HandCoins className="size-3.5 mr-1 text-ivory/70" aria-hidden />
-                  Debts
+                  {t.nav.debts}
                 </Button>
               </div>
             </div>
@@ -761,13 +1029,13 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
             {/* Income & Expense (2 Clean Columns) */}
             <div className="grid grid-cols-2 gap-2.5">
               <StatCard
-                label="Income"
+                label={t.dashboard.statCards.income}
                 value={d.summary.income}
                 trend={incomeTrend ?? undefined}
                 className="p-3.5 rounded-2xl"
               />
               <StatCard
-                label="Expenses"
+                label={t.dashboard.statCards.expense}
                 value={d.summary.netExpense}
                 trend={expenseTrend ?? undefined}
                 className="p-3.5 rounded-2xl"
@@ -778,7 +1046,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
             <div className="rounded-2xl border border-hairline/80 bg-card p-3.5 shadow-card flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
-                  Net Financial Position
+                  {t.dashboard.statCards.netPosition}
                 </p>
                 <p className="text-[11px] text-ink-soft mt-0.5">
                   Cash + Receivables − Payables
@@ -901,7 +1169,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
           {/* ---------------------------------------------------- charts */}
           <div className="grid gap-3 lg:grid-cols-2">
             <SectionCard
-              title="Income vs Expenses"
+              title={t.dashboard.charts.cashFlow}
               subtitle={flowMonthly ? "Monthly totals for the selected period" : "Daily totals for the selected period"}
             >
               {flowHasData ? (
@@ -946,7 +1214,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
               )}
             </SectionCard>
 
-            <SectionCard title="Expense by Category" subtitle="Where the money went">
+            <SectionCard title={t.dashboard.charts.expenseByCategory} subtitle="Where the money went">
               {donut.length > 0 && donutTotal > 0 ? (
                 <>
                   <div className="relative">
@@ -997,14 +1265,14 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
               ) : (
                 <EmptyState
                   icon={Receipt}
-                  title="No expenses in this period"
+                  title={t.dashboard.charts.noTransactions}
                   description="Once you log expenses, the category split appears here."
                   className="border-0 bg-transparent py-8"
                 />
               )}
             </SectionCard>
 
-            <SectionCard title="6-Month Trend" subtitle="Income vs expenses by month">
+            <SectionCard title={t.dashboard.charts.monthlyTrend} subtitle="Income vs expenses by month">
               {trendHasData ? (
                 <>
                   <ResponsiveContainer width="100%" height={220}>
@@ -1064,7 +1332,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
             </SectionCard>
 
             <SectionCard
-              title="Budget Health"
+              title={t.dashboard.charts.budgetStatus}
               subtitle={
                 bu.totalLimit > 0
                   ? `${formatPKR(bu.totalUsed, { compact: true })} of ${formatPKR(bu.totalLimit, { compact: true })} used`
@@ -1139,7 +1407,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
 
           {/* ---------------------------------------- upcoming & overdue */}
           <SectionCard
-            title="Upcoming & Overdue"
+            title={t.dashboard.charts.upcomingBills}
             subtitle="Debts due within 30 days and recurring items due within 7"
             contentClassName={d.upcoming.length > 0 ? "p-0 sm:p-0" : undefined}
           >
@@ -1174,11 +1442,11 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
 
           {/* ------------------------------------------ recent activity */}
           <SectionCard
-            title="Recent Transactions"
+            title={t.dashboard.charts.recentActivity}
             subtitle="Latest entries across all accounts"
             action={
               <Button variant="ghost" size="sm" onClick={() => onViewChange("transactions")}>
-                View all
+                {t.dashboard.charts.viewAll}
                 <ArrowRight className="size-3.5" aria-hidden />
               </Button>
             }
@@ -1193,7 +1461,7 @@ export default function DashboardView({ user, onViewChange }: ViewProps) {
             ) : (
               <EmptyState
                 icon={Receipt}
-                title="No transactions yet"
+                title={t.dashboard.charts.noTransactions}
                 description="Use Quick add (the + button) to record your first entry."
                 className="border-0 bg-transparent py-6"
               />

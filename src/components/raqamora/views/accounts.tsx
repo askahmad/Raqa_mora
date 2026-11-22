@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { ApiError, apiGet, apiSend, qs } from "@/lib/raqamora/client";
 import { getCachedGet } from "@/lib/raqamora/offline-sync";
 import { formatPKR, parseRupeesToPaisa } from "@/lib/raqamora/money";
+import { useLanguage } from "@/lib/raqamora/i18n";
 import {
   ACCOUNT_TYPES,
   ACCOUNT_TYPE_LABELS,
@@ -143,6 +144,7 @@ function typeLabel(t: TxnRow): string {
 
 export default function AccountsView(_props: ViewProps) {
   const guard = useUnauthorizedGuard();
+  const { t, isUrdu } = useLanguage();
 
   const cachedAccounts = getCachedGet<{ accounts: AccountWithBalance[] }>("/api/accounts");
   const [accounts, setAccounts] = React.useState<AccountWithBalance[]>(() => cachedAccounts?.accounts ?? []);
@@ -243,12 +245,12 @@ export default function AccountsView(_props: ViewProps) {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Accounts"
-        description="Cash, bank & mobile wallets"
+        title={t.accounts.title}
+        description={t.accounts.subtitle}
         actions={
           <>
             <Button variant="outline" onClick={() => setTransferOpen(true)} className="min-h-9 rounded-xl shadow-2xs hover:bg-muted/60 active:scale-95 transition-transform">
-              <ArrowLeftRight className="size-4 mr-1.5" aria-hidden /> Transfer
+              <ArrowLeftRight className="size-4 mr-1.5" aria-hidden /> {t.accounts.transfer}
             </Button>
             <Button
               onClick={() => {
@@ -257,7 +259,7 @@ export default function AccountsView(_props: ViewProps) {
               }}
               className="min-h-9 rounded-xl bg-gradient-to-r from-brand-emerald-deep to-brand-emerald text-white font-semibold shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 hover:brightness-105 active:scale-95 transition-all"
             >
-              <Plus className="size-4 mr-1.5" aria-hidden /> New account
+              <Plus className="size-4 mr-1.5" aria-hidden /> {t.accounts.newAccount}
             </Button>
           </>
         }
@@ -272,7 +274,7 @@ export default function AccountsView(_props: ViewProps) {
         <div className="pointer-events-none absolute -left-12 -bottom-12 size-36 rounded-full bg-gold/15 blur-2xl" />
         <div className="relative z-10">
           <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ivory/60">
-            Total Consolidated Balance
+            {t.accounts.totalBalance}
           </p>
           <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
             <Money value={totalBalance} size="xl" className="text-3xl sm:text-4xl font-extrabold text-white" />
@@ -1682,44 +1684,70 @@ function AccountMonthlyProgressDialog({
                 </div>
               </div>
 
-              {/* Active Month 3-Card Summary */}
-              <div className="grid grid-cols-3 gap-2.5">
-                {/* Inflow */}
-                <div className="rounded-2xl border border-hairline/80 bg-card p-3 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-brand-emerald-deep dark:text-[#53c6ac] mb-1">
-                    <TrendingUp className="size-3.5" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider">Aaya / Inflow</span>
-                  </div>
-                  <Money value={activeRecord.inflow} size="md" className="text-brand-emerald-deep dark:text-[#53c6ac] font-bold" />
-                  <p className="text-[10.5px] text-ink-soft mt-1">Total added</p>
-                </div>
-
-                {/* Outflow */}
-                <div className="rounded-2xl border border-hairline/80 bg-card p-3 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-danger-brand mb-1">
-                    <TrendingDown className="size-3.5" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider">Kharcha</span>
-                  </div>
-                  <Money value={activeRecord.outflow} size="md" className="text-danger-brand font-bold" />
-                  <p className="text-[10.5px] text-ink-soft mt-1">Total spent</p>
-                </div>
-
-                {/* Net Progress */}
-                <div className="rounded-2xl border border-hairline/80 bg-card p-3 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-ink-soft mb-1">
-                    <Sparkles className="size-3.5 text-gold" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider">Net Bachat</span>
-                  </div>
-                  <span className={cn(
-                    "text-[15px] font-extrabold truncate block",
-                    activeRecord.net >= 0 ? "text-brand-emerald-deep dark:text-[#53c6ac]" : "text-danger-brand"
-                  )}>
-                    {activeRecord.net >= 0 ? "+" : "−"}{formatPKR(Math.abs(activeRecord.net))}
+              {/* 5-Step Visual Rollover Sequence for this Account */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-stretch">
+                {/* 1. Carried Forward */}
+                <div className="rounded-2xl border border-hairline/80 bg-card p-2.5 shadow-2xs flex flex-col justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+                    1. Carried In
                   </span>
-                  <p className="text-[10.5px] text-ink-soft mt-1">
-                    {activeRecord.savingsRate > 0 ? `${activeRecord.savingsRate}% bachat` : "0% savings"}
-                  </p>
+                  <div className="mt-1.5">
+                    <Money value={activeRecord.carriedForward} size="sm" className="font-bold text-ink" />
+                  </div>
+                  <span className="text-[9.5px] text-ink-soft mt-0.5">Last month balance</span>
                 </div>
+
+                {/* 2. Inflow */}
+                <div className="rounded-2xl border border-hairline/80 bg-card p-2.5 shadow-2xs flex flex-col justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand-emerald-deep dark:text-[#53c6ac]">
+                    2. Added (+In)
+                  </span>
+                  <div className="mt-1.5">
+                    <Money value={activeRecord.inflow} size="sm" className="font-bold text-brand-emerald-deep dark:text-[#53c6ac]" />
+                  </div>
+                  <span className="text-[9.5px] text-ink-soft mt-0.5">Deposits this month</span>
+                </div>
+
+                {/* 3. Total Available */}
+                <div className="rounded-2xl border border-hairline/80 bg-card p-2.5 shadow-2xs flex flex-col justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink">
+                    3. Available (=)
+                  </span>
+                  <div className="mt-1.5">
+                    <Money value={activeRecord.available} size="sm" className="font-extrabold text-ink" />
+                  </div>
+                  <span className="text-[9.5px] text-ink-soft mt-0.5">Carried + Added</span>
+                </div>
+
+                {/* 4. Outflow */}
+                <div className="rounded-2xl border border-hairline/80 bg-card p-2.5 shadow-2xs flex flex-col justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-danger-brand">
+                    4. Spent (−Out)
+                  </span>
+                  <div className="mt-1.5">
+                    <Money value={activeRecord.outflow} size="sm" className="font-bold text-danger-brand" />
+                  </div>
+                  <span className="text-[9.5px] text-ink-soft mt-0.5">Expenses & bills</span>
+                </div>
+
+                {/* 5. Shifts to next month */}
+                <div className="col-span-2 sm:col-span-1 rounded-2xl border-2 border-brand-emerald bg-brand-emerald/10 p-2.5 shadow-xs flex flex-col justify-between ring-1 ring-brand-emerald/30">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand-emerald-deep dark:text-[#53c6ac]">
+                    5. Shifts Next (➔)
+                  </span>
+                  <div className="mt-1.5">
+                    <Money value={activeRecord.remaining} size="sm" className="font-extrabold text-brand-emerald-deep dark:text-[#53c6ac]" />
+                  </div>
+                  <span className="text-[9.5px] text-brand-emerald font-semibold mt-0.5">Next month balance</span>
+                </div>
+              </div>
+
+              {/* Explainer Rule Box */}
+              <div className="rounded-2xl bg-muted/40 border border-hairline/60 p-2.5 text-xs text-ink-soft flex items-start gap-2">
+                <span className="text-sm">💡</span>
+                <p className="leading-relaxed">
+                  Usool: June mein 15,000 dale aur 13,000 kharch kiye, to baqi 2,000 aglay mahine (July) mein khud ba khud shamil ho jaye ge.
+                </p>
               </div>
 
               {/* Visual Progress Bar */}
@@ -1763,7 +1791,7 @@ function AccountMonthlyProgressDialog({
                     <span className="size-2 rounded-full bg-brand-emerald" />
                     Bachat: {formatPKR(Math.max(0, activeRecord.net))}
                   </span>
-                  <span>Month End Balance: {formatPKR(activeRecord.endingBalance)}</span>
+                  <span>Shifts to next: {formatPKR(activeRecord.shiftsToNextMonth)}</span>
                 </div>
               </div>
 
@@ -1806,6 +1834,9 @@ function AccountMonthlyProgressDialog({
                             </span>
                             <span className="text-danger-brand font-medium">
                               −{formatPKR(m.outflow)} out
+                            </span>
+                            <span className="text-brand-emerald font-semibold">
+                              ➔ Shifts: {formatPKR(m.shiftsToNextMonth)}
                             </span>
                             <span>{m.txnCount} txns</span>
                           </div>

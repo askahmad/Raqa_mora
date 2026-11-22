@@ -45,6 +45,7 @@ import { formatPKR, formatRupees } from "@/lib/raqamora/money";
 import { parseBankSms, type ParsedSmsTransaction } from "@/lib/raqamora/sms-parser";
 import { TXN_TYPE_LABELS, txnFieldRequirements, type TxnType } from "@/lib/raqamora/finance";
 import { transactionSchema } from "@/lib/raqamora/validation";
+import { useLanguage } from "@/lib/raqamora/i18n";
 import type {
   AccountWithBalance,
   CategoryRow,
@@ -263,6 +264,21 @@ function getTopTab(t: TxnType): TopTab {
 
 export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }: TransactionQuickAddProps) {
   const guard = useUnauthorizedGuard();
+  const { t, isUrdu, locale } = useLanguage();
+
+  const tabLabels = {
+    expense: locale === "en" ? "Expense" : locale === "ur" ? "خرچ" : "Kharcha",
+    income: locale === "en" ? "Income" : locale === "ur" ? "آمدنی" : "Aamdani",
+    transfer: locale === "en" ? "Transfer" : locale === "ur" ? "ٹرانسفر" : "Transfer",
+    khata: locale === "en" ? "Khata" : locale === "ur" ? "کھاتہ" : "Khata",
+  };
+
+  const khataSubLabels = {
+    lent: locale === "en" ? "I Lent (Receivable)" : locale === "ur" ? "ادھار دیا (لینی رقم)" : "Mene Diye (Lena hai)",
+    borrowed: locale === "en" ? "I Borrowed (Payable)" : locale === "ur" ? "ادھار لیا (دینی رقم)" : "Mene Liye (Dena hai)",
+    repaymentReceived: locale === "en" ? "Repayment In" : locale === "ur" ? "واپسی ملی" : "Wapsi Mili",
+    repaymentMade: locale === "en" ? "Repayment Out" : locale === "ur" ? "واپسی دی" : "Wapsi Di",
+  };
 
   const cachedAccounts = getCachedGet<{ accounts: AccountWithBalance[] }>("/api/accounts")?.accounts;
   const cachedCategories = getCachedGet<{ categories: CategoryRow[] }>("/api/categories")?.categories;
@@ -727,7 +743,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
               )}
             >
               <TrendingDown className="size-3.5" />
-              <span>Kharcha</span>
+              <span>{tabLabels.expense}</span>
             </button>
 
             <button
@@ -741,7 +757,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
               )}
             >
               <TrendingUp className="size-3.5" />
-              <span>Aamdani</span>
+              <span>{tabLabels.income}</span>
             </button>
 
             <button
@@ -755,7 +771,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
               )}
             >
               <ArrowLeftRight className="size-3.5" />
-              <span>Transfer</span>
+              <span>{tabLabels.transfer}</span>
             </button>
 
             <button
@@ -769,7 +785,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
               )}
             >
               <HandCoins className="size-3.5" />
-              <span>Khata</span>
+              <span>{tabLabels.khata}</span>
             </button>
           </div>
         </div>
@@ -787,7 +803,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
                   : "text-ink-soft hover:text-ink",
               )}
             >
-              Mene Diye (Lena hai)
+              {khataSubLabels.lent}
             </button>
             <button
               type="button"
@@ -799,7 +815,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
                   : "text-ink-soft hover:text-ink",
               )}
             >
-              Mene Liye (Dena hai)
+              {khataSubLabels.borrowed}
             </button>
             <button
               type="button"
@@ -811,7 +827,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
                   : "text-ink-soft hover:text-ink",
               )}
             >
-              Wapsi Mili
+              {khataSubLabels.repaymentReceived}
             </button>
             <button
               type="button"
@@ -823,7 +839,7 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
                   : "text-ink-soft hover:text-ink",
               )}
             >
-              Wapsi Di
+              {khataSubLabels.repaymentMade}
             </button>
           </div>
         )}
@@ -1404,20 +1420,20 @@ export default function TransactionQuickAdd({ onSaved, defaultType = "EXPENSE" }
             <Check className="size-4 mr-2" aria-hidden />
           )}
           {submitting
-            ? "Save ho raha hai…"
+            ? locale === "en" ? "Saving…" : locale === "ur" ? "محفوظ ہو رہا ہے…" : "Save ho raha hai…"
             : type === "EXPENSE"
-              ? `Save Kharcha ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
+              ? `${locale === "en" ? "Save Expense" : locale === "ur" ? "خرچ محفوظ کریں" : "Save Kharcha"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
               : type === "INCOME"
-                ? `Save Aamdani ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
+                ? `${locale === "en" ? "Save Income" : locale === "ur" ? "آمدنی محفوظ کریں" : "Save Aamdani"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
                 : type === "TRANSFER"
-                  ? `Transfer ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : "Karein"}`
+                  ? `${locale === "en" ? "Transfer Funds" : locale === "ur" ? "رقم ٹرانسفر کریں" : "Transfer Karein"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
                   : type === "LENT"
-                    ? `Save Khata (Diye) ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
+                    ? `${locale === "en" ? "Save Lent" : locale === "ur" ? "ادھار دیا محفوظ کریں" : "Save Khata (Diye)"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
                     : type === "BORROWED"
-                      ? `Save Khata (Liye) ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
+                      ? `${locale === "en" ? "Save Borrowed" : locale === "ur" ? "ادھار لیا محفوظ کریں" : "Save Khata (Liye)"} ${watchedAmount > 0 ? `• Rs ${formatRupees(Math.round(watchedAmount * 100))}` : ""}`
                       : isRepayment(type)
-                        ? "Save Wapsi"
-                        : "Save Entry"}
+                        ? locale === "en" ? "Save Repayment" : locale === "ur" ? "واپسی محفوظ کریں" : "Save Wapsi"
+                        : locale === "en" ? "Save Entry" : locale === "ur" ? "اندراج محفوظ کریں" : "Save Entry"}
         </Button>
       </div>
       {/* SMS Paste Dialog */}

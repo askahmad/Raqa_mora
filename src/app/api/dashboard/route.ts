@@ -318,6 +318,63 @@ export async function GET(req: NextRequest) {
     });
     const prevSummary = computePeriodSummary(prevTxns);
 
+    // ---- monthly rollover computation (carried forward -> available -> remaining -> shifts to next) ----
+    const [curY, curM] = monthKey.split("-").map(Number);
+    const prevDate = new Date(Date.UTC(curY, curM - 2, 15));
+    const nextDate = new Date(Date.UTC(curY, curM, 15));
+    const prevMonthKey = prevDate.toISOString().slice(0, 7);
+    const nextMonthKey = nextDate.toISOString().slice(0, 7);
+
+    const fmtMonthName = (dt: Date) =>
+      new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(dt);
+
+    const prevMonthLabel = fmtMonthName(prevDate);
+    const curMonthLabel = fmtMonthName(new Date(Date.UTC(curY, curM - 1, 15)));
+    const nextMonthLabel = fmtMonthName(nextDate);
+
+    // Gather this month's transactions across all accounts
+    const curMonthTxns =
+      range === "month"
+        ? periodRows
+        : await db.transaction.findMany({
+            where: { userId: session.id, date: { gte: monthBounds.from, lte: monthBounds.to } },
+            select: { type: true, amount: true, signed: true },
+          });
+
+    let thisMonthAdded = 0;
+    let thisMonthSpent = 0;
+    for (const r of curMonthTxns) {
+      if (r.type === "INCOME" || r.type === "REFUND") {
+        thisMonthAdded += r.amount;
+      } else if (r.type === "EXPENSE") {
+        thisMonthSpent += r.amount;
+      }
+    }
+
+    const thisMonthNet = thisMonthAdded - thisMonthSpent;
+    const carriedForward = totalBalance - thisMonthNet;
+    const totalAvailable = carriedForward + thisMonthAdded;
+    const remaining = totalAvailable - thisMonthSpent;
+    const shiftsToNextMonth = remaining;
+    const savingsRate =
+      totalAvailable > 0 ? Math.max(0, Math.round((remaining / totalAvailable) * 100)) : 0;
+
+    const monthlyRollover = {
+      monthKey,
+      monthLabel: curMonthLabel,
+      previousMonthKey: prevMonthKey,
+      previousMonthLabel: prevMonthLabel,
+      nextMonthKey,
+      nextMonthLabel,
+      carriedForward,
+      thisMonthAdded,
+      totalAvailable,
+      thisMonthSpent,
+      remaining,
+      shiftsToNextMonth,
+      savingsRate,
+    };
+
     const payload: DashboardData = {
       period: { label, from: from.toISOString(), to: to.toISOString() },
       accounts,
@@ -338,6 +395,7 @@ export async function GET(req: NextRequest) {
         expense: prevSummary.expense,
         netSavings: prevSummary.income - prevSummary.netExpense,
       },
+      monthlyRollover,
     };
 
     return NextResponse.json(payload);

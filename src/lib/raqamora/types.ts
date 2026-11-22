@@ -33,12 +33,32 @@ export interface AccountWithBalance {
 export interface AccountMonthlyRecord {
   month: string; // "YYYY-MM"
   monthLabel: string; // "November 2026"
-  inflow: number; // paisa
-  outflow: number; // paisa
-  net: number; // paisa
+  carriedForward: number; // paisa from previous month
+  inflow: number; // paisa added this month
+  available: number; // carriedForward + inflow (paisa)
+  outflow: number; // paisa spent this month
+  remaining: number; // available - outflow (shifts to next month)
+  shiftsToNextMonth: number; // paisa that rolls forward to next month
+  net: number; // inflow - outflow (paisa)
   endingBalance: number; // paisa
   txnCount: number;
   savingsRate: number; // % (0-100)
+}
+
+export interface MonthlyRollover {
+  monthKey: string; // "YYYY-MM", e.g. "2026-06"
+  monthLabel: string; // "June 2026"
+  previousMonthKey: string; // "YYYY-MM", e.g. "2026-05"
+  previousMonthLabel: string; // "May 2026"
+  nextMonthKey: string; // "YYYY-MM", e.g. "2026-07"
+  nextMonthLabel: string; // "July 2026"
+  carriedForward: number; // paisa rolled over from previous month
+  thisMonthAdded: number; // paisa added this month (inflow)
+  totalAvailable: number; // carriedForward + thisMonthAdded (paisa)
+  thisMonthSpent: number; // paisa spent this month (outflow)
+  remaining: number; // totalAvailable - thisMonthSpent (paisa)
+  shiftsToNextMonth: number; // amount shifting to next month (paisa)
+  savingsRate: number; // percentage (0 - 100)
 }
 
 export interface AccountMonthlyResponse {
@@ -183,6 +203,7 @@ export interface DashboardData {
   frequentCategories: Array<{ name: string; icon: string; count: number; total: number }>;
   peopleWithBalances: Array<{ id: string; name: string; receivable: number; payable: number }>;
   comparison: { income: number; expense: number; netSavings?: number } | null;
+  monthlyRollover?: MonthlyRollover;
 }
 
 export interface SessionUser {

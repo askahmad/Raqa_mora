@@ -20,6 +20,7 @@ import { Spinner } from "@/components/raqamora/kit";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Monogram } from "@/components/raqamora/brand";
 import { PinLockScreen, isPinLockEnabled } from "@/components/raqamora/pin-lock";
+import { useLanguage } from "@/lib/raqamora/i18n";
 
 /* ------------------------------------------------------------ View loading */
 
@@ -92,6 +93,7 @@ function BootScreen() {
 type Phase = "loading" | "guest" | "onboarding" | "app";
 
 export function AppRoot() {
+  const { t, locale } = useLanguage();
   const [phase, setPhase] = React.useState<Phase>("loading");
   const [user, setUser] = React.useState<SessionUser | null>(null);
   const [view, setView] = React.useState<ViewKey>("dashboard");
@@ -307,9 +309,13 @@ export function AppRoot() {
       <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Quick Entry</DialogTitle>
+            <DialogTitle>{t.quickAdd}</DialogTitle>
             <DialogDescription>
-              Kharcha, aamdani ya khata jaldi se record karein.
+              {locale === "en"
+                ? "Record an expense, income, transfer or khata in 1 tap."
+                : locale === "ur"
+                  ? "ایک کلک میں خرچہ، آمدنی یا ادھار ریکارڈ کریں۔"
+                  : "Kharcha, aamdani ya khata jaldi se record karein."}
             </DialogDescription>
           </DialogHeader>
           <TransactionQuickAdd

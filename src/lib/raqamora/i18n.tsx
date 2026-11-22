@@ -5,6 +5,83 @@ import type { ViewKey } from "@/components/raqamora/view-props";
 
 export type Locale = "en" | "ur" | "roman";
 
+export interface DashboardTranslations {
+  greeting: string;
+  financialSummary: string;
+  totalBalance: string;
+  monthlyRolloverCard: {
+    title: string;
+    subtitle: string;
+    carriedFromLastMonth: string;
+    carriedSubtext: string;
+    addedThisMonth: string;
+    addedSubtext: string;
+    totalAvailable: string;
+    totalAvailableSubtext: string;
+    spentThisMonth: string;
+    spentSubtext: string;
+    remainingForNextMonth: string;
+    remainingSubtext: string;
+    easyAddTitle: string;
+    easyAddPlaceholder: string;
+    addBtn: string;
+    saving: string;
+    selectAccount: string;
+    exampleExplainer: string;
+    successAdded: string;
+  };
+  statCards: {
+    netPosition: string;
+    income: string;
+    expense: string;
+    netSavings: string;
+    lent: string;
+    borrowed: string;
+  };
+  tabs: {
+    today: string;
+    week: string;
+    month: string;
+    year: string;
+    custom: string;
+  };
+  charts: {
+    cashFlow: string;
+    expenseByCategory: string;
+    monthlyTrend: string;
+    recentActivity: string;
+    viewAll: string;
+    noTransactions: string;
+    budgetStatus: string;
+    upcomingBills: string;
+  };
+}
+
+export interface AccountsTranslations {
+  title: string;
+  subtitle: string;
+  newAccount: string;
+  transfer: string;
+  totalBalance: string;
+  activeWallets: string;
+  archivedWallets: string;
+  showArchived: string;
+  hideArchived: string;
+  monthlyProgressBtn: string;
+  editAmountBtn: string;
+  addMonthlyBtn: string;
+  emptyNotice: string;
+  quickEditTitle: string;
+  quickEditSubtitle: string;
+  monthlyDialogTitle: string;
+  monthlyDialogSubtitle: string;
+  carriedForward: string;
+  inflowAdded: string;
+  available: string;
+  outflowSpent: string;
+  remainingShift: string;
+}
+
 export interface Translations {
   appName: string;
   tagline: string;
@@ -17,6 +94,8 @@ export interface Translations {
   onlineSyncBanner: string;
   nav: Record<ViewKey, string>;
   viewMeta: Record<ViewKey, { title: string; subtitle: string }>;
+  dashboard: DashboardTranslations;
+  accounts: AccountsTranslations;
   common: {
     income: string;
     expense: string;
@@ -26,6 +105,7 @@ export interface Translations {
     save: string;
     cancel: string;
     delete: string;
+    edit: string;
     amount: string;
     date: string;
     category: string;
@@ -35,6 +115,7 @@ export interface Translations {
     balance: string;
     search: string;
     total: string;
+    close: string;
   };
 }
 
@@ -79,6 +160,81 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       kameti: { title: "Kameti", subtitle: "Peer-saving & rotating credit tracker" },
       zakat: { title: "Zakat Calculator", subtitle: "Nisab & Islamic wealth evaluation" },
     },
+    dashboard: {
+      greeting: "Assalam-o-Alaikum",
+      financialSummary: "Financial Summary & Rollover",
+      totalBalance: "Total Available Balance",
+      monthlyRolloverCard: {
+        title: "Monthly Budget & Rollover",
+        subtitle: "Unspent money automatically shifts into next month's balance",
+        carriedFromLastMonth: "Carried from Last Month",
+        carriedSubtext: "Unspent money brought forward",
+        addedThisMonth: "Added This Month",
+        addedSubtext: "Income & deposits",
+        totalAvailable: "Total Available",
+        totalAvailableSubtext: "Carried + Added",
+        spentThisMonth: "Spent This Month",
+        spentSubtext: "Expenses & bills",
+        remainingForNextMonth: "Remaining (Shifting to Next Month)",
+        remainingSubtext: "Will roll into next month",
+        easyAddTitle: "Add Monthly Amount / Salary",
+        easyAddPlaceholder: "e.g. 50,000",
+        addBtn: "Save Raqam",
+        saving: "Saving...",
+        selectAccount: "Account",
+        exampleExplainer: "Rule: If you add Rs 15,000 in June and spend Rs 13,000, the remaining Rs 2,000 automatically rolls into July as starting funds.",
+        successAdded: "Monthly amount added successfully!",
+      },
+      statCards: {
+        netPosition: "Net Position",
+        income: "Income",
+        expense: "Expense",
+        netSavings: "Net Savings",
+        lent: "Money Lent (Receivable)",
+        borrowed: "Money Borrowed (Payable)",
+      },
+      tabs: {
+        today: "Today",
+        week: "Week",
+        month: "Month",
+        year: "Year",
+        custom: "Custom",
+      },
+      charts: {
+        cashFlow: "Cash Flow",
+        expenseByCategory: "Spending by Category",
+        monthlyTrend: "Monthly Trend",
+        recentActivity: "Recent Activity",
+        viewAll: "View all",
+        noTransactions: "No transactions in this period",
+        budgetStatus: "Budget Status",
+        upcomingBills: "Upcoming Bills & Debts",
+      },
+    },
+    accounts: {
+      title: "Accounts & Wallets",
+      subtitle: "Cash, bank & mobile wallets",
+      newAccount: "New Account",
+      transfer: "Transfer",
+      totalBalance: "Total Balance Across All Accounts",
+      activeWallets: "Active Accounts",
+      archivedWallets: "Archived Accounts",
+      showArchived: "Show Archived",
+      hideArchived: "Hide Archived",
+      monthlyProgressBtn: "Monthly Progress & Rollover",
+      editAmountBtn: "Quick Edit Amount",
+      addMonthlyBtn: "Is Mahine Ki Raqam Dalein",
+      emptyNotice: "No accounts found. Create your first wallet or bank account.",
+      quickEditTitle: "Edit Account Amount / Balance",
+      quickEditSubtitle: "Update the live amount in this wallet or record an adjustment.",
+      monthlyDialogTitle: "Monthly Carry-Forward & Progress",
+      monthlyDialogSubtitle: "Track unspent money shifting month to month.",
+      carriedForward: "Carried Forward",
+      inflowAdded: "Added Inflow",
+      available: "Total Available",
+      outflowSpent: "Spent",
+      remainingShift: "Remaining for Next Month",
+    },
     common: {
       income: "Income",
       expense: "Expense",
@@ -88,6 +244,7 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       save: "Save",
       cancel: "Cancel",
       delete: "Delete",
+      edit: "Edit",
       amount: "Amount",
       date: "Date",
       category: "Category",
@@ -97,6 +254,7 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       balance: "Balance",
       search: "Search...",
       total: "Total",
+      close: "Close",
     },
   },
   ur: {
@@ -139,6 +297,81 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       kameti: { title: "کمیٹی ٹریکر", subtitle: "ماہانہ اقساط اور قرعہ اندازی کا حساب" },
       zakat: { title: "زکوٰۃ کیلکولیٹر", subtitle: "نصاب کا تعین اور ڈھائی فیصد حساب" },
     },
+    dashboard: {
+      greeting: "السلام علیکم",
+      financialSummary: "مالی خلاصہ اور ماہانہ رول اوور",
+      totalBalance: "کل دستیاب بیلنس",
+      monthlyRolloverCard: {
+        title: "ماہانہ بجٹ اور بچت کی منتقلی (رول اوور)",
+        subtitle: "بچ جانے والی رقم خود بخود اگلے مہینے منتقل ہو جاتی ہے",
+        carriedFromLastMonth: "پچھلے مہینے سے آئی رقم",
+        carriedSubtext: "پچھلے مہینے کی غیر خرچ شدہ رقم",
+        addedThisMonth: "اس مہینے ڈالی گئی رقم",
+        addedSubtext: "آمدن، تنخواہ اور ڈپازٹس",
+        totalAvailable: "کل دستیاب رقم",
+        totalAvailableSubtext: "پچھلی بچت + نئی آمدنی",
+        spentThisMonth: "اس مہینے کا خرچہ",
+        spentSubtext: "تمام بل اور اخراجات",
+        remainingForNextMonth: "باقی بچی رقم (اگلے مہینے شفٹ ہوگی)",
+        remainingSubtext: "اگلے مہینے میں خود بخود جائے گی",
+        easyAddTitle: "اس مہینے کی رقم / تنخواہ درج کریں",
+        easyAddPlaceholder: "مثلاً 50,000",
+        addBtn: "رقم محفوظ کریں",
+        saving: "محفوظ ہو رہا ہے...",
+        selectAccount: "اکاؤنٹ منتخب کریں",
+        exampleExplainer: "اصول: اگر آپ نے جون میں 15,000 روپے ڈالے اور 13,000 خرچ کیے، تو باقی 2,000 روپے خود بخود جولائی میں بطور شروعاتی رقم شفٹ ہو جائیں گے۔",
+        successAdded: "ماہانہ رقم کامیابی سے شامل ہو گئی!",
+      },
+      statCards: {
+        netPosition: "مجموعی مالی حالت",
+        income: "آمدنی",
+        expense: "خرچ",
+        netSavings: "خالص بچت",
+        lent: "ادھار دیا (لینی رقم)",
+        borrowed: "ادھار لیا (دینی رقم)",
+      },
+      tabs: {
+        today: "آج",
+        week: "یہ ہفتہ",
+        month: "یہ مہینہ",
+        year: "یہ سال",
+        custom: "تاریخ منتخب کریں",
+      },
+      charts: {
+        cashFlow: "پیسوں کا بہاؤ",
+        expenseByCategory: "کیٹگری کے لحاظ سے خرچ",
+        monthlyTrend: "ماہانہ رجحان",
+        recentActivity: "حالیہ لین دین",
+        viewAll: "سب دیکھیں",
+        noTransactions: "اس مدت میں کوئی لین دین نہیں ہوا",
+        budgetStatus: "بجٹ کی صورتحال",
+        upcomingBills: "آنے والے بل اور ادھار",
+      },
+    },
+    accounts: {
+      title: "اکاؤنٹس اور والٹس",
+      subtitle: "کیش، بینک اور موبائل والٹس (ایزی پیسہ، جیز کیش)",
+      newAccount: "نیا اکاؤنٹ بنائیں",
+      transfer: "رقم ٹرانسفر کریں",
+      totalBalance: "تمام اکاؤنٹس کا کل بیلنس",
+      activeWallets: "فعال اکاؤنٹس",
+      archivedWallets: "محفوظ شدہ (آرکائیو) اکاؤنٹس",
+      showArchived: "آرکائیو دکھائیں",
+      hideArchived: "آرکائیو چھپائیں",
+      monthlyProgressBtn: "ماہانہ بچت اور رول اوور",
+      editAmountBtn: "رقم تبدیل کریں",
+      addMonthlyBtn: "اس مہینے کی رقم شامل کریں",
+      emptyNotice: "کوئی اکاؤنٹ نہیں ملا۔ کیش یا بینک اکاؤنٹ شامل کریں۔",
+      quickEditTitle: "اکاؤنٹ کا بیلنس تبدیل کریں",
+      quickEditSubtitle: "موجودہ رقم کو درست کریں یا نئی رقم درج کریں۔",
+      monthlyDialogTitle: "ماہانہ رپورٹ اور رول اوور",
+      monthlyDialogSubtitle: "دیکھیں کہ ہر مہینے کتنا آیا، کتنا خرچ ہوا اور کتنا اگلے مہینے شفٹ ہوا۔",
+      carriedForward: "پچھلے مہینے سے آئی رقم",
+      inflowAdded: "اس مہینے آئی رقم",
+      available: "کل دستیاب رقم",
+      outflowSpent: "خرچ ہوا",
+      remainingShift: "اگلے مہینے شفٹ ہونے والی بچت",
+    },
     common: {
       income: "آمدنی",
       expense: "خرچ",
@@ -148,6 +381,7 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       save: "محفوظ کریں",
       cancel: "منسوخ",
       delete: "حذف کریں",
+      edit: "ترمیم کریں",
       amount: "رقم",
       date: "تاریخ",
       category: "کیٹگری",
@@ -157,6 +391,7 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       balance: "بیلنس",
       search: "تلاش کریں...",
       total: "کل رقم",
+      close: "بند کریں",
     },
   },
   roman: {
@@ -177,7 +412,7 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       debts: "Udhar / Khata",
       budgets: "Monthly Budgets",
       goals: "Bachat Goals",
-      recurring: "Recurring Bills",
+      recurring: "Mahana Bills",
       reports: "Reports & Charts",
       notifications: "Alerts",
       settings: "Settings",
@@ -199,6 +434,81 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       kameti: { title: "Kameti Tracker", subtitle: "Mahana bachat committee aur barri" },
       zakat: { title: "Zakat Calculator", subtitle: "Nisab aur 2.5% zakat ka hisab" },
     },
+    dashboard: {
+      greeting: "Assalam-o-Alaikum",
+      financialSummary: "Mali Khulasa & Mahana Rollover",
+      totalBalance: "Kul Dastyab Balance",
+      monthlyRolloverCard: {
+        title: "Is Mahine Ki Raqam & Bachat Shift (Rollover)",
+        subtitle: "Bachi hui raqam khud-bakhud aglay mahine shift hoti hai",
+        carriedFromLastMonth: "Pichlay Mahine Se Aaya",
+        carriedSubtext: "Pichlay mahine ki bachi hui raqam",
+        addedThisMonth: "Is Mahine Dali Raqam",
+        addedSubtext: "Aamadni, tankhwah aur jama",
+        totalAvailable: "Kul Dastyab Raqam",
+        totalAvailableSubtext: "Pichli bachat + Is mahine ki raqam",
+        spentThisMonth: "Is Mahine Ka Kharcha",
+        spentSubtext: "Bills aur kharchay",
+        remainingForNextMonth: "Baqi Raqam (Aglay Mahine Shift Hogi)",
+        remainingSubtext: "Aglay mahine mein shamil ho jayegi",
+        easyAddTitle: "Is Mahine Ki Raqam / Salary Shamil Karein",
+        easyAddPlaceholder: "Maslan 50,000",
+        addBtn: "Raqam Save Karein",
+        saving: "Save ho raha hai...",
+        selectAccount: "Account chunein",
+        exampleExplainer: "Usool: Agar aap ne June mein 15,000 dale aur 13,000 kharch kiye, to baqi 2,000 khud-bakhud July mein shift ho jayenge.",
+        successAdded: "Mahana raqam kamyabi se shamil ho gayi!",
+      },
+      statCards: {
+        netPosition: "Kul Mali Position",
+        income: "Aamdani",
+        expense: "Kharch",
+        netSavings: "Khaalis Bachat",
+        lent: "Udhar Diya (Lene Hain)",
+        borrowed: "Udhar Liya (Dene Hain)",
+      },
+      tabs: {
+        today: "Aaj",
+        week: "Yeh Hafta",
+        month: "Yeh Mahina",
+        year: "Yeh Saal",
+        custom: "Apni Marzi Ka Range",
+      },
+      charts: {
+        cashFlow: "Paison Ka Bahaao (Cash Flow)",
+        expenseByCategory: "Kharch Category Ke Mutabiq",
+        monthlyTrend: "Mahana Trend",
+        recentActivity: "Halia Transactions",
+        viewAll: "Sab Dekhein",
+        noTransactions: "Is arsay mein koi entry nahi hai",
+        budgetStatus: "Budget Ki Halat",
+        upcomingBills: "Aane Walay Bills Aur Udhar",
+      },
+    },
+    accounts: {
+      title: "Accounts & Wallets",
+      subtitle: "Cash, bank aur mobile wallets (Easypaisa, JazzCash)",
+      newAccount: "Naya Account Banayein",
+      transfer: "Raqam Transfer Karein",
+      totalBalance: "Tamam Accounts Ka Kul Balance",
+      activeWallets: "Active Accounts",
+      archivedWallets: "Archived Accounts",
+      showArchived: "Archived Dekhein",
+      hideArchived: "Archived Chhupayein",
+      monthlyProgressBtn: "Mahana Progress & Rollover",
+      editAmountBtn: "Raqam Edit Karein",
+      addMonthlyBtn: "Is Mahine Ki Raqam Dalein",
+      emptyNotice: "Koi account nahi mila. Naya cash ya bank account shamil karein.",
+      quickEditTitle: "Account Balance Edit Karein",
+      quickEditSubtitle: "Wallet ki raqam foran update karein.",
+      monthlyDialogTitle: "Mahana Rollover & Progress",
+      monthlyDialogSubtitle: "Har mahine ki bachat aglay mahine shift hoti hai.",
+      carriedForward: "Pichlay Mahine Se Aaya",
+      inflowAdded: "Is Mahine Dali Raqam",
+      available: "Kul Dastyab Raqam",
+      outflowSpent: "Kharch Hua",
+      remainingShift: "Aglay Mahine Shift Honay Wali Bachat",
+    },
     common: {
       income: "Aamadni",
       expense: "Kharch",
@@ -208,6 +518,7 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       save: "Save Karein",
       cancel: "Cancel",
       delete: "Delete",
+      edit: "Edit",
       amount: "Raqam",
       date: "Tareekh",
       category: "Category",
@@ -217,6 +528,7 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
       balance: "Balance",
       search: "Dhoondein...",
       total: "Kul Raqam",
+      close: "Band Karein",
     },
   },
 };
@@ -285,7 +597,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage() {
   const ctx = React.useContext(LanguageContext);
   if (!ctx) {
-    // fallback safe
     return {
       locale: "en" as Locale,
       setLocale: () => {},
@@ -295,4 +606,3 @@ export function useLanguage() {
   }
   return ctx;
 }
-

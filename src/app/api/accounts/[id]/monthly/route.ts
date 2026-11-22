@@ -84,6 +84,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     }
 
     let runningBalance = account.openingBalance;
+    let carriedForwardBalance = account.openingBalance;
     const recordsMap = new Map<string, AccountMonthlyRecord>();
 
     for (const m of sortedAscMonths) {
@@ -110,13 +111,24 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       }
 
       const net = inflow - outflow;
-      const savingsRate = inflow > 0 ? Math.max(0, Math.round((net / inflow) * 100)) : 0;
+      const carriedForward = carriedForwardBalance;
+      const available = carriedForward + inflow;
+      const remaining = available - outflow;
+      const shiftsToNextMonth = remaining;
+      const savingsRate = available > 0 ? Math.max(0, Math.round((remaining / available) * 100)) : 0;
+
+      // Next month starts with what remained at the end of this month (rollover)
+      carriedForwardBalance = remaining;
 
       recordsMap.set(m, {
         month: m,
         monthLabel: fmtMonthLabel(m),
+        carriedForward,
         inflow,
+        available,
         outflow,
+        remaining,
+        shiftsToNextMonth,
         net,
         endingBalance: runningBalance,
         txnCount: monthTxns.length,
